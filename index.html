@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Proformas | Transporte de Personal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="logos/empresa.png" alt="Logo empresa" class="brand-logo" id="brandLogoMaster">
+      <div class="brand-text">
+        <strong>TransRoute</strong>
+        <span>Sistema de Proformas</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#" data-vista="nueva">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
+        Nueva Proforma
+      </a>
+      <a class="nav-item" href="#" data-vista="historial">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        Historial
+        <span class="nav-badge" id="navBadgeHistorial" hidden>0</span>
+      </a>
+      <a class="nav-item" href="#" data-vista="configuracion">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Configuración
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <h1 id="tituloVista">Nueva Proforma</h1>
+        <p class="subtitle" id="subtituloVista">Genera una proforma de transporte de personal en segundos.</p>
+      </div>
+      <div class="topbar-actions" id="accionesNuevaProforma">
+        <button class="btn btn-ghost" id="btnNuevaProforma" title="Limpiar formulario y empezar de cero">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Nueva
+        </button>
+        <button class="btn btn-secondary" id="btnGuardarProforma">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Guardar
+        </button>
+        <button class="btn btn-primary" id="btnGenerarPDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          Generar PDF
+        </button>
+      </div>
+    </header>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="vista" id="vistaNueva">
+    <div class="content-grid">
+
+      <!-- ============ COLUMNA FORMULARIO ============ -->
+      <section class="col-form">
+
+        <!-- Selector de empresa -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Empresa Cliente</h2>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="selectEmpresa">Empresa</label>
+              <select id="selectEmpresa" class="select">
+                <option value="mcdonalds">McDonald's</option>
+                <option value="kfc">KFC</option>
+                <option value="subway">Subway</option>
+                <option value="pizzahut">Pizza Hut</option>
+                <option value="otra">Otra</option>
+              </select>
+            </div>
+
+            <div class="empresa-preview" id="empresaPreview">
+              <img id="empresaLogoPreview" src="logos/mcdonalds.png" alt="Logo cliente" class="empresa-logo-chip">
+              <div>
+                <strong id="empresaNombrePreview">McDonald's</strong>
+                <span>Cliente seleccionado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos generales -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Datos Generales</h2>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inputFecha">Fecha</label>
+                <input type="date" id="inputFecha" class="input">
+              </div>
+              <div class="form-group">
+                <label for="inputNumeroProforma">Número de Proforma</label>
+                <input type="text" id="inputNumeroProforma" class="input" placeholder="Ej. PF-0001">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inputSucursal">Sucursal</label>
+                <input type="text" id="inputSucursal" class="input" placeholder="Ej. Sucursal Centro">
+              </div>
+              <div class="form-group">
+                <label for="selectPrecioVuelta">Precio por 1 vuelta</label>
+                <select id="selectPrecioVuelta" class="select">
+                  <option value="35">35 USD</option>
+                  <option value="40">40 USD</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="inputObservaciones">Observaciones</label>
+              <textarea id="inputObservaciones" class="textarea" rows="3" placeholder="Notas adicionales sobre la proforma..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agregar recorrido -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Agregar Recorrido</h2>
+          </div>
+          <div class="card-body">
+            <div class="form-row form-row-3">
+              <div class="form-group">
+                <label for="inputHoraSalida">Hora de salida</label>
+                <input type="time" id="inputHoraSalida" class="input">
+              </div>
+              <div class="form-group">
+                <label for="inputPersonas">Cantidad de personas</label>
+                <input type="number" id="inputPersonas" class="input" min="1" max="14" value="1">
+              </div>
+              <div class="form-group">
+                <label for="inputVueltas">Cantidad de vueltas</label>
+                <input type="number" id="inputVueltas" class="input" min="1" value="1">
+              </div>
+            </div>
+
+            <button class="btn btn-secondary btn-block" id="btnAgregarRecorrido">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Agregar recorrido
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de recorridos -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Recorridos</h2>
+            <span class="badge" id="badgeCantidadRecorridos">0</span>
+          </div>
+          <div class="card-body no-padding">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Personas</th>
+                    <th>Vueltas</th>
+                    <th>Costo</th>
+                    <th class="th-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaRecorridosBody">
+                  <tr class="empty-row" id="filaVacia">
+                    <td colspan="5">Aún no se han agregado recorridos.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="totales">
+              <div class="totales-row">
+                <span>Subtotal</span>
+                <strong id="subtotalValor">$0.00</strong>
+              </div>
+              <div class="totales-row totales-final">
+                <span>Total</span>
+                <strong id="totalValor">$0.00</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============ COLUMNA VISTA PREVIA ============ -->
+      <section class="col-preview">
+        <div class="card preview-card">
+          <div class="card-header">
+            <h2>Vista Previa</h2>
+            <span class="badge badge-neutral">En vivo</span>
+          </div>
+          <div class="card-body">
+
+            <div class="preview-doc" id="previewDoc">
+              <div class="preview-doc-header" id="previewDocHeader">
+                <div class="preview-doc-brand">
+                  <img src="logos/empresa.png" alt="Logo empresa" class="preview-logo-empresa" id="previewLogoEmpresa">
+                  <div>
+                    <strong id="previewNombreTransportista">TransRoute S.A.</strong>
+                    <span>Transporte de Personal</span>
+                  </div>
+                </div>
+                <img id="previewLogoCliente" src="logos/mcdonalds.png" alt="Logo cliente" class="preview-logo-cliente">
+              </div>
+
+              <div class="preview-doc-title">
+                <h3 id="previewEmpresaNombre">McDonald's</h3>
+                <span>Proforma de Servicio de Transporte</span>
+              </div>
+
+              <div class="preview-doc-meta">
+                <div>
+                  <span>Fecha</span>
+                  <strong id="previewFecha">—</strong>
+                </div>
+                <div>
+                  <span>N° Proforma</span>
+                  <strong id="previewNumero">—</strong>
+                </div>
+                <div>
+                  <span>Sucursal</span>
+                  <strong id="previewSucursal">—</strong>
+                </div>
+              </div>
+
+              <table class="preview-table">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Personas</th>
+                    <th>Vueltas</th>
+                    <th>Costo</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTablaBody">
+                  <tr class="empty-row">
+                    <td colspan="4">Sin recorridos aún.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="preview-doc-total">
+                <span>Total</span>
+                <strong id="previewTotal">$0.00</strong>
+              </div>
+
+              <div class="preview-doc-obs">
+                <span>Observaciones</span>
+                <p id="previewObservaciones">—</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+    </div><!-- /vistaNueva -->
+
+    <!-- ===================== VISTA HISTORIAL ===================== -->
+    <div class="vista" id="vistaHistorial" hidden>
+      <div class="card">
+        <div class="card-header">
+          <h2>Proformas guardadas</h2>
+          <span class="badge" id="badgeHistorialTotal">0</span>
+        </div>
+        <div class="card-body no-padding">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>N° Proforma</th>
+                  <th>Empresa</th>
+                  <th>Sucursal</th>
+                  <th>Total</th>
+                  <th class="th-actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaHistorialBody">
+                <tr class="empty-row" id="filaVaciaHistorial">
+                  <td colspan="6">Todavía no has guardado ninguna proforma.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VISTA CONFIGURACIÓN ===================== -->
+    <div class="vista" id="vistaConfiguracion" hidden>
+      <div class="card">
+        <div class="card-header">
+          <h2>Precios por defecto</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="selectPrecioDefecto">Precio por defecto para 1 vuelta</label>
+            <select id="selectPrecioDefecto" class="select">
+              <option value="35">35 USD</option>
+              <option value="40">40 USD</option>
+            </select>
+          </div>
+          <p class="config-hint">Este valor se usará automáticamente al abrir una "Nueva Proforma". Puedes cambiarlo por caso puntual desde el formulario.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Datos de la empresa transportista</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="inputNombreTransportista">Nombre de la empresa</label>
+            <input type="text" id="inputNombreTransportista" class="input" placeholder="TransRoute S.A.">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Historial</h2>
+        </div>
+        <div class="card-body">
+          <p class="config-hint">Elimina de forma permanente todas las proformas guardadas en este equipo.</p>
+          <button class="btn btn-danger-outline" id="btnVaciarHistorial">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+            Vaciar historial
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Plantilla de fila oculta para edición (usada por script.js) -->
+<template id="templateFilaEdicion">
+  <tr class="fila-edicion">
+    <td><input type="time" class="input input-sm edit-hora"></td>
+    <td><input type="number" class="input input-sm edit-personas" min="1" max="14"></td>
+    <td><input type="number" class="input input-sm edit-vueltas" min="1"></td>
+    <td class="edit-costo">$0.00</td>
+    <td class="th-actions">
+      <button class="icon-btn icon-btn-success btn-guardar-edicion" title="Guardar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </button>
+      <button class="icon-btn icon-btn-muted btn-cancelar-edicion" title="Cancelar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </td>
+  </tr>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="script.js"></script>
+<script src="pdf.js"></script>
+</body>
+</html>
