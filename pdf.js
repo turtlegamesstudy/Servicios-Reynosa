@@ -86,7 +86,7 @@ function imagenADataURL(ruta) {
  */
 function recopilarDatosProforma() {
   const empresa = empresas[estado.empresaActual];
-  const subtotal = estado.recorridos.reduce((acumulado, recorrido) => acumulado + recorrido.costo, 0);
+  const { subtotal, descuento, impuesto, total } = calcularTotales();
 
   return {
     empresa: {
@@ -94,14 +94,17 @@ function recopilarDatosProforma() {
       nombre: empresa.nombre,
       logo: empresa.logo,
       colorPrincipal: empresa.colorPrincipal,
-      colorSecundario: empresa.colorSecundario
+      colorSecundario: empresa.colorSecundario,
+      moneda: empresa.moneda || estado.configuracion.monedaDefecto
     },
     nombreTransportista: estado.configuracion.nombreTransportista,
     datosGenerales: {
       fecha: dom.inputFecha.value,
       numeroProforma: dom.inputNumeroProforma.value.trim(),
       sucursal: dom.inputSucursal.value.trim(),
-      observaciones: dom.inputObservaciones.value.trim()
+      observaciones: dom.inputObservaciones.value.trim(),
+      descuentoPorcentaje: parseFloat(dom.inputDescuento.value) || 0,
+      impuestoPorcentaje: parseFloat(dom.inputImpuesto.value) || 0
     },
     recorridos: estado.recorridos.map((recorrido) => ({
       hora: recorrido.hora,
@@ -110,7 +113,9 @@ function recopilarDatosProforma() {
       costo: recorrido.costo
     })),
     subtotal: subtotal,
-    total: subtotal
+    descuento: descuento,
+    impuesto: impuesto,
+    total: total
   };
 }
 
@@ -130,17 +135,22 @@ function adaptarProformaGuardada(proformaGuardada) {
       nombre: proformaGuardada.empresaNombre,
       logo: empresa ? empresa.logo : "logos/generica.png",
       colorPrincipal: empresa ? empresa.colorPrincipal : "#64646E",
-      colorSecundario: empresa ? empresa.colorSecundario : "#18181B"
+      colorSecundario: empresa ? empresa.colorSecundario : "#18181B",
+      moneda: proformaGuardada.moneda || (empresa && empresa.moneda) || estado.configuracion.monedaDefecto
     },
     nombreTransportista: estado.configuracion.nombreTransportista,
     datosGenerales: {
       fecha: proformaGuardada.fecha,
       numeroProforma: proformaGuardada.numeroProforma,
       sucursal: proformaGuardada.sucursal,
-      observaciones: proformaGuardada.observaciones
+      observaciones: proformaGuardada.observaciones,
+      descuentoPorcentaje: proformaGuardada.descuentoPorcentaje || 0,
+      impuestoPorcentaje: proformaGuardada.impuestoPorcentaje || 0
     },
     recorridos: proformaGuardada.recorridos,
     subtotal: proformaGuardada.subtotal,
+    descuento: proformaGuardada.descuento || 0,
+    impuesto: proformaGuardada.impuesto || 0,
     total: proformaGuardada.total
   };
 }
@@ -330,7 +340,7 @@ async function construirDocumentoPDF(datos) {
     formatearHora(recorrido.hora),
     String(recorrido.personas),
     String(recorrido.vueltas),
-    formatearMoneda(recorrido.costo)
+    formatearMoneda(recorrido.costo, datos.empresa.moneda)
   ]);
 
   doc.autoTable({
@@ -345,21 +355,46 @@ async function construirDocumentoPDF(datos) {
 
   let yDespuesTabla = doc.lastAutoTable.finalY + 8;
 
-  // ---------- Total ----------
+  // ---------- Total (con desglose de descuento / impuesto si aplican) ----------
+  const hayDescuento = datos.descuento > 0;
+  const hayImpuesto = datos.impuesto > 0;
   const anchoCajaTotal = 70;
+  const altoCajaTotal = 14 + (hayDescuento ? 6 : 0) + (hayImpuesto ? 6 : 0);
+  const xCajaTotal = anchoPagina - margen - anchoCajaTotal;
+
   doc.setFillColor(247, 247, 248);
-  doc.roundedRect(anchoPagina - margen - anchoCajaTotal, yDespuesTabla, anchoCajaTotal, 14, 2, 2, "F");
+  doc.roundedRect(xCajaTotal, yDespuesTabla, anchoCajaTotal, altoCajaTotal, 2, 2, "F");
+
+  let yLineaTotal = yDespuesTabla + 6;
+
+  if (hayDescuento) {
+    doc.setTextColor(110, 110, 120);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Descuento (${datos.datosGenerales.descuentoPorcentaje}%)`, xCajaTotal + 6, yLineaTotal);
+    doc.text("-" + formatearMoneda(datos.descuento, datos.empresa.moneda), anchoPagina - margen - 6, yLineaTotal, { align: "right" });
+    yLineaTotal += 6;
+  }
+
+  if (hayImpuesto) {
+    doc.setTextColor(110, 110, 120);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Impuesto (${datos.datosGenerales.impuestoPorcentaje}%)`, xCajaTotal + 6, yLineaTotal);
+    doc.text("+" + formatearMoneda(datos.impuesto, datos.empresa.moneda), anchoPagina - margen - 6, yLineaTotal, { align: "right" });
+    yLineaTotal += 6;
+  }
 
   doc.setTextColor(90, 90, 98);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("TOTAL", anchoPagina - margen - anchoCajaTotal + 6, yDespuesTabla + 9);
+  doc.text("TOTAL", xCajaTotal + 6, yLineaTotal + 3);
 
   doc.setTextColor(r, g, b);
   doc.setFontSize(13);
-  doc.text(formatearMoneda(datos.total), anchoPagina - margen - 6, yDespuesTabla + 9, { align: "right" });
+  doc.text(formatearMoneda(datos.total, datos.empresa.moneda), anchoPagina - margen - 6, yLineaTotal + 3, { align: "right" });
 
-  yDespuesTabla += 24;
+  yDespuesTabla += altoCajaTotal + 10;
 
   // ---------- Observaciones ----------
   if (datos.datosGenerales.observaciones) {
