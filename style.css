@@ -884,3 +884,306 @@ label{
     width: 100%;
   }
 }
+/* =========================================================
+   TEMA OSCURO
+   ========================================================= */
+:root[data-tema="oscuro"]{
+  --primary: #f4f4f5;
+  --primary-contrast: #18181b;
+
+  --background: #101012;
+  --surface: #18181b;
+  --surface-alt: #1f1f23;
+
+  --border: #2a2a30;
+  --border-strong: #38383f;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-tema="oscuro"] .nav-item.active{
+  background: var(--secondary);
+  color: #fff;
+}
+
+:root[data-tema="oscuro"] .toast{
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+/* =========================================================
+   DENSIDAD DE LA INTERFAZ
+   ========================================================= */
+:root[data-densidad="compacta"] .card-body{
+  padding: 14px;
+  gap: 10px;
+}
+
+:root[data-densidad="compacta"] .card-header{
+  padding: 11px 14px;
+}
+
+:root[data-densidad="compacta"] .input,
+:root[data-densidad="compacta"] .select,
+:root[data-densidad="compacta"] .textarea{
+  padding: 6px 10px;
+}
+
+:root[data-densidad="compacta"] .table thead th,
+:root[data-densidad="compacta"] .table tbody td{
+  padding: 8px 14px;
+}
+
+:root[data-densidad="compacta"] .form-row,
+:root[data-densidad="compacta"] .form-row-3{
+  gap: 10px;
+}
+
+:root[data-densidad="compacta"] .col-form,
+:root[data-densidad="compacta"] .col-preview{
+  gap: 14px;
+}
+
+/* =========================================================
+   SIDEBAR — PASTILLA DE ESTADO DE LA NUBE
+   ========================================================= */
+.sidebar-footer{
+  margin-top: auto;
+  padding: 4px 6px;
+}
+
+.cloud-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 100%;
+}
+
+.cloud-dot{
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cloud-dot-on{
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}
+
+.cloud-dot-off{
+  background: var(--text-muted);
+}
+
+@media (max-width: 780px){
+  .sidebar-footer{ display: none; }
+}
+
+/* =========================================================
+   EMPRESA PREVIEW — ETIQUETA DE MONEDA
+   ========================================================= */
+.empresa-preview-moneda{
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   CONFIGURACIÓN — CONTROL SEGMENTADO (TEMA / DENSIDAD)
+   ========================================================= */
+.segmented{
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  gap: 2px;
+  width: fit-content;
+}
+
+.segmento-btn{
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 6px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.segmento-btn:hover{
+  color: var(--text-primary);
+}
+
+.segmento-btn.activo{
+  background: var(--secondary);
+  color: #fff;
+}
+
+/* =========================================================
+   CONFIGURACIÓN — SELECTOR DE COLOR
+   ========================================================= */
+.color-field{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatch{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.color-swatch::-webkit-color-swatch-wrapper{
+  padding: 3px;
+}
+
+.color-swatch::-webkit-color-swatch{
+  border: none;
+  border-radius: 5px;
+}
+
+.color-field span{
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   CONFIGURACIÓN — INTERRUPTOR (SWITCH)
+   ========================================================= */
+.switch-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.switch{
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input{
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.switch-track{
+  position: absolute;
+  inset: 0;
+  background: var(--border-strong);
+  border-radius: 999px;
+  transition: background var(--transition-fast);
+}
+
+.switch-thumb{
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+
+.switch input:checked + .switch-track{
+  background: var(--secondary);
+}
+
+.switch input:checked + .switch-track .switch-thumb{
+  transform: translateX(18px);
+}
+
+/* =========================================================
+   CONFIGURACIÓN — LISTA Y TARJETAS DE EMPRESAS
+   ========================================================= */
+.lista-empresas{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empresa-card{
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: var(--surface-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empresa-card-head{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.empresa-card-logo{
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.empresa-card-nombre{
+  flex: 1;
+  font-weight: 700;
+}
+
+.empresa-card-nueva{
+  border-style: dashed;
+}
+
+/* =========================================================
+   RESPONSIVE ADICIONAL
+   ========================================================= */
+@media (max-width: 780px){
+  .segmented{
+    width: 100%;
+  }
+  .segmento-btn{
+    flex: 1;
+    text-align: center;
+  }
+}
