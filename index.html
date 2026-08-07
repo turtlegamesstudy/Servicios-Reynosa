@@ -13,28 +13,35 @@
   <!-- ===================== SIDEBAR ===================== -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="logos/empresa.png" alt="Logo empresa" class="brand-logo" id="brandLogoMaster">
+      <img src="logos/Empresa.jpeg" alt="Logo empresa" class="brand-logo" id="brandLogoMaster">
       <div class="brand-text">
-        <strong>TransRoute</strong>
-        <span>Sistema de Proformas</span>
+        <strong>Trasnporte</strong>
+        <span data-i18n="brand_subtitle">Sistema de Proformas</span>
       </div>
     </div>
 
     <nav class="sidebar-nav">
       <a class="nav-item active" href="#" data-vista="nueva">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
-        Nueva Proforma
+        <span data-i18n="nav_nueva">Nueva Proforma</span>
       </a>
       <a class="nav-item" href="#" data-vista="historial">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-        Historial
+        <span data-i18n="nav_historial">Historial</span>
         <span class="nav-badge" id="navBadgeHistorial" hidden>0</span>
       </a>
       <a class="nav-item" href="#" data-vista="configuracion">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        Configuración
+        <span data-i18n="nav_config">Configuración</span>
       </a>
     </nav>
+
+    <div class="sidebar-footer">
+      <span class="cloud-pill" id="pildoraNube" title="Estado de sincronización">
+        <span class="cloud-dot" id="puntoNube"></span>
+        <span id="textoNube">—</span>
+      </span>
+    </div>
   </aside>
 
   <!-- ===================== MAIN ===================== -->
@@ -48,15 +55,15 @@
       <div class="topbar-actions" id="accionesNuevaProforma">
         <button class="btn btn-ghost" id="btnNuevaProforma" title="Limpiar formulario y empezar de cero">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Nueva
+          <span data-i18n="btn_nueva">Nueva</span>
         </button>
         <button class="btn btn-secondary" id="btnGuardarProforma">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          Guardar
+          <span data-i18n="btn_guardar">Guardar</span>
         </button>
         <button class="btn btn-primary" id="btnGenerarPDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-          Generar PDF
+          <span data-i18n="btn_generar_pdf">Generar PDF</span>
         </button>
       </div>
     </header>
@@ -72,25 +79,19 @@
         <!-- Selector de empresa -->
         <div class="card">
           <div class="card-header">
-            <h2>Empresa Cliente</h2>
+            <h2 data-i18n="card_empresa_cliente">Empresa Cliente</h2>
           </div>
           <div class="card-body">
             <div class="form-group">
-              <label for="selectEmpresa">Empresa</label>
-              <select id="selectEmpresa" class="select">
-                <option value="mcdonalds">McDonald's</option>
-                <option value="kfc">KFC</option>
-                <option value="subway">Subway</option>
-                <option value="pizzahut">Pizza Hut</option>
-                <option value="otra">Otra</option>
-              </select>
+              <label for="selectEmpresa" data-i18n="label_empresa">Empresa</label>
+              <select id="selectEmpresa" class="select"></select>
             </div>
 
             <div class="empresa-preview" id="empresaPreview">
               <img id="empresaLogoPreview" src="logos/mcdonalds.png" alt="Logo cliente" class="empresa-logo-chip">
               <div>
                 <strong id="empresaNombrePreview">McDonald's</strong>
-                <span>Cliente seleccionado</span>
+                <span data-i18n="empresa_preview_tag">Cliente seleccionado</span>
               </div>
             </div>
           </div>
@@ -99,37 +100,53 @@
         <!-- Datos generales -->
         <div class="card">
           <div class="card-header">
-            <h2>Datos Generales</h2>
+            <h2 data-i18n="card_datos_generales">Datos Generales</h2>
           </div>
           <div class="card-body">
             <div class="form-row">
               <div class="form-group">
-                <label for="inputFecha">Fecha</label>
+                <label for="inputFecha" data-i18n="label_fecha">Fecha</label>
                 <input type="date" id="inputFecha" class="input">
               </div>
               <div class="form-group">
-                <label for="inputNumeroProforma">Número de Proforma</label>
-                <input type="text" id="inputNumeroProforma" class="input" placeholder="Ej. PF-0001">
+                <label for="inputNumeroProforma" data-i18n="label_numero_proforma">Número de Proforma</label>
+                <input type="text" id="inputNumeroProforma" class="input" data-i18n-placeholder="placeholder_numero" placeholder="Ej. PF-0001">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="inputSucursal">Sucursal</label>
-                <input type="text" id="inputSucursal" class="input" placeholder="Ej. Sucursal Centro">
+                <label for="inputSucursal" data-i18n="label_sucursal">Sucursal</label>
+                <input type="text" id="inputSucursal" class="input" data-i18n-placeholder="placeholder_sucursal" placeholder="Ej. Sucursal Centro">
               </div>
               <div class="form-group">
-                <label for="selectPrecioVuelta">Precio por 1 vuelta</label>
-                <select id="selectPrecioVuelta" class="select">
-                  <option value="35">35 USD</option>
-                  <option value="40">40 USD</option>
-                </select>
+                <label for="inputPrecioVuelta" data-i18n="label_precio_base">Precio por 1 vuelta</label>
+                <input type="number" id="inputPrecioVuelta" class="input" min="0" step="0.01">
               </div>
             </div>
 
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inputPrecioAdicional" data-i18n="label_precio_adicional">Precio por vuelta adicional</label>
+                <input type="number" id="inputPrecioAdicional" class="input" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="inputDescuento" data-i18n="label_descuento">Descuento (%)</label>
+                <input type="number" id="inputDescuento" class="input" min="0" max="100" step="0.5" value="0">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inputImpuesto" data-i18n="label_impuesto">Impuesto (%)</label>
+                <input type="number" id="inputImpuesto" class="input" min="0" max="100" step="0.5" value="0">
+              </div>
+              <div class="form-group"></div>
+            </div>
+
             <div class="form-group">
-              <label for="inputObservaciones">Observaciones</label>
-              <textarea id="inputObservaciones" class="textarea" rows="3" placeholder="Notas adicionales sobre la proforma..."></textarea>
+              <label for="inputObservaciones" data-i18n="label_observaciones">Observaciones</label>
+              <textarea id="inputObservaciones" class="textarea" rows="3" data-i18n-placeholder="placeholder_obs" placeholder="Notas adicionales sobre la proforma..."></textarea>
             </div>
           </div>
         </div>
@@ -137,27 +154,27 @@
         <!-- Agregar recorrido -->
         <div class="card">
           <div class="card-header">
-            <h2>Agregar Recorrido</h2>
+            <h2 data-i18n="card_agregar_recorrido">Agregar Recorrido</h2>
           </div>
           <div class="card-body">
             <div class="form-row form-row-3">
               <div class="form-group">
-                <label for="inputHoraSalida">Hora de salida</label>
+                <label for="inputHoraSalida" data-i18n="label_hora_salida">Hora de salida</label>
                 <input type="time" id="inputHoraSalida" class="input">
               </div>
               <div class="form-group">
-                <label for="inputPersonas">Cantidad de personas</label>
+                <label for="inputPersonas" data-i18n="label_personas">Cantidad de personas</label>
                 <input type="number" id="inputPersonas" class="input" min="1" max="14" value="1">
               </div>
               <div class="form-group">
-                <label for="inputVueltas">Cantidad de vueltas</label>
+                <label for="inputVueltas" data-i18n="label_vueltas">Cantidad de vueltas</label>
                 <input type="number" id="inputVueltas" class="input" min="1" value="1">
               </div>
             </div>
 
             <button class="btn btn-secondary btn-block" id="btnAgregarRecorrido">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Agregar recorrido
+              <span data-i18n="btn_agregar_recorrido">Agregar recorrido</span>
             </button>
           </div>
         </div>
@@ -165,7 +182,7 @@
         <!-- Tabla de recorridos -->
         <div class="card">
           <div class="card-header">
-            <h2>Recorridos</h2>
+            <h2 data-i18n="card_recorridos">Recorridos</h2>
             <span class="badge" id="badgeCantidadRecorridos">0</span>
           </div>
           <div class="card-body no-padding">
@@ -173,16 +190,16 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Hora</th>
-                    <th>Personas</th>
-                    <th>Vueltas</th>
-                    <th>Costo</th>
-                    <th class="th-actions">Acciones</th>
+                    <th data-i18n="th_hora">Hora</th>
+                    <th data-i18n="th_personas">Personas</th>
+                    <th data-i18n="th_vueltas">Vueltas</th>
+                    <th data-i18n="th_costo">Costo</th>
+                    <th class="th-actions" data-i18n="th_acciones">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="tablaRecorridosBody">
                   <tr class="empty-row" id="filaVacia">
-                    <td colspan="5">Aún no se han agregado recorridos.</td>
+                    <td colspan="5" data-i18n="empty_recorridos">Aún no se han agregado recorridos.</td>
                   </tr>
                 </tbody>
               </table>
@@ -190,11 +207,19 @@
 
             <div class="totales">
               <div class="totales-row">
-                <span>Subtotal</span>
+                <span data-i18n="label_subtotal">Subtotal</span>
                 <strong id="subtotalValor">$0.00</strong>
               </div>
+              <div class="totales-row" id="filaDescuentoTotales" hidden>
+                <span data-i18n="label_descuento">Descuento (%)</span>
+                <strong id="descuentoValor">-$0.00</strong>
+              </div>
+              <div class="totales-row" id="filaImpuestoTotales" hidden>
+                <span data-i18n="label_impuesto">Impuesto (%)</span>
+                <strong id="impuestoValor">+$0.00</strong>
+              </div>
               <div class="totales-row totales-final">
-                <span>Total</span>
+                <span data-i18n="label_total">Total</span>
                 <strong id="totalValor">$0.00</strong>
               </div>
             </div>
@@ -207,8 +232,8 @@
       <section class="col-preview">
         <div class="card preview-card">
           <div class="card-header">
-            <h2>Vista Previa</h2>
-            <span class="badge badge-neutral">En vivo</span>
+            <h2 data-i18n="card_vista_previa">Vista Previa</h2>
+            <span class="badge badge-neutral" data-i18n="tag_en_vivo">En vivo</span>
           </div>
           <div class="card-body">
 
@@ -218,7 +243,7 @@
                   <img src="logos/empresa.png" alt="Logo empresa" class="preview-logo-empresa" id="previewLogoEmpresa">
                   <div>
                     <strong id="previewNombreTransportista">TransRoute S.A.</strong>
-                    <span>Transporte de Personal</span>
+                    <span data-i18n="preview_transporte">Transporte de Personal</span>
                   </div>
                 </div>
                 <img id="previewLogoCliente" src="logos/mcdonalds.png" alt="Logo cliente" class="preview-logo-cliente">
@@ -226,20 +251,20 @@
 
               <div class="preview-doc-title">
                 <h3 id="previewEmpresaNombre">McDonald's</h3>
-                <span>Proforma de Servicio de Transporte</span>
+                <span data-i18n="preview_titulo_doc">Proforma de Servicio de Transporte</span>
               </div>
 
               <div class="preview-doc-meta">
                 <div>
-                  <span>Fecha</span>
+                  <span data-i18n="label_fecha">Fecha</span>
                   <strong id="previewFecha">—</strong>
                 </div>
                 <div>
-                  <span>N° Proforma</span>
+                  <span data-i18n="th_numero_proforma">N° Proforma</span>
                   <strong id="previewNumero">—</strong>
                 </div>
                 <div>
-                  <span>Sucursal</span>
+                  <span data-i18n="label_sucursal">Sucursal</span>
                   <strong id="previewSucursal">—</strong>
                 </div>
               </div>
@@ -247,26 +272,26 @@
               <table class="preview-table">
                 <thead>
                   <tr>
-                    <th>Hora</th>
-                    <th>Personas</th>
-                    <th>Vueltas</th>
-                    <th>Costo</th>
+                    <th data-i18n="th_hora">Hora</th>
+                    <th data-i18n="th_personas">Personas</th>
+                    <th data-i18n="th_vueltas">Vueltas</th>
+                    <th data-i18n="th_costo">Costo</th>
                   </tr>
                 </thead>
                 <tbody id="previewTablaBody">
                   <tr class="empty-row">
-                    <td colspan="4">Sin recorridos aún.</td>
+                    <td colspan="4" data-i18n="empty_recorridos">Sin recorridos aún.</td>
                   </tr>
                 </tbody>
               </table>
 
               <div class="preview-doc-total">
-                <span>Total</span>
+                <span data-i18n="label_total">Total</span>
                 <strong id="previewTotal">$0.00</strong>
               </div>
 
               <div class="preview-doc-obs">
-                <span>Observaciones</span>
+                <span data-i18n="label_observaciones">Observaciones</span>
                 <p id="previewObservaciones">—</p>
               </div>
             </div>
@@ -282,7 +307,7 @@
     <div class="vista" id="vistaHistorial" hidden>
       <div class="card">
         <div class="card-header">
-          <h2>Proformas guardadas</h2>
+          <h2 data-i18n="card_historial_titulo">Proformas guardadas</h2>
           <span class="badge" id="badgeHistorialTotal">0</span>
         </div>
         <div class="card-body no-padding">
@@ -290,17 +315,17 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>N° Proforma</th>
-                  <th>Empresa</th>
-                  <th>Sucursal</th>
-                  <th>Total</th>
-                  <th class="th-actions">Acciones</th>
+                  <th data-i18n="th_fecha">Fecha</th>
+                  <th data-i18n="th_numero_proforma">N° Proforma</th>
+                  <th data-i18n="th_empresa">Empresa</th>
+                  <th data-i18n="label_sucursal">Sucursal</th>
+                  <th data-i18n="th_total">Total</th>
+                  <th class="th-actions" data-i18n="th_acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tablaHistorialBody">
                 <tr class="empty-row" id="filaVaciaHistorial">
-                  <td colspan="6">Todavía no has guardado ninguna proforma.</td>
+                  <td colspan="6" data-i18n="empty_historial">Todavía no has guardado ninguna proforma.</td>
                 </tr>
               </tbody>
             </table>
@@ -311,43 +336,186 @@
 
     <!-- ===================== VISTA CONFIGURACIÓN ===================== -->
     <div class="vista" id="vistaConfiguracion" hidden>
+
+      <!-- ---------- Apariencia ---------- -->
       <div class="card">
         <div class="card-header">
-          <h2>Precios por defecto</h2>
+          <h2 data-i18n="card_apariencia">Apariencia</h2>
         </div>
         <div class="card-body">
           <div class="form-group">
-            <label for="selectPrecioDefecto">Precio por defecto para 1 vuelta</label>
-            <select id="selectPrecioDefecto" class="select">
-              <option value="35">35 USD</option>
-              <option value="40">40 USD</option>
-            </select>
+            <label data-i18n="label_tema">Tema</label>
+            <div class="segmented" id="segmentoTema">
+              <button type="button" class="segmento-btn" data-tema="claro" data-i18n="opt_tema_claro">Claro</button>
+              <button type="button" class="segmento-btn" data-tema="oscuro" data-i18n="opt_tema_oscuro">Oscuro</button>
+              <button type="button" class="segmento-btn" data-tema="auto" data-i18n="opt_tema_auto">Automático</button>
+            </div>
           </div>
-          <p class="config-hint">Este valor se usará automáticamente al abrir una "Nueva Proforma". Puedes cambiarlo por caso puntual desde el formulario.</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inputColorAcento" data-i18n="label_color_acento">Color de acento</label>
+              <div class="color-field">
+                <input type="color" id="inputColorAcento" class="color-swatch" value="#6366f1">
+                <span id="valorColorAcento">#6366f1</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_densidad">Densidad de la interfaz</label>
+              <div class="segmented" id="segmentoDensidad">
+                <button type="button" class="segmento-btn" data-densidad="comoda" data-i18n="opt_densidad_comoda">Cómoda</button>
+                <button type="button" class="segmento-btn" data-densidad="compacta" data-i18n="opt_densidad_compacta">Compacta</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="config-hint" data-i18n="hint_apariencia">Estas preferencias se guardan en este equipo y se aplican de inmediato.</p>
         </div>
       </div>
 
+      <!-- ---------- Idioma ---------- -->
       <div class="card">
         <div class="card-header">
-          <h2>Datos de la empresa transportista</h2>
+          <h2 data-i18n="card_idioma">Idioma</h2>
         </div>
         <div class="card-body">
           <div class="form-group">
-            <label for="inputNombreTransportista">Nombre de la empresa</label>
+            <label for="selectIdioma" data-i18n="label_idioma">Idioma de la aplicación</label>
+            <select id="selectIdioma" class="select">
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <p class="config-hint" data-i18n="hint_idioma">Cambia el idioma de toda la interfaz.</p>
+        </div>
+      </div>
+
+      <!-- ---------- Precios y empresas ---------- -->
+      <div class="card">
+        <div class="card-header">
+          <h2 data-i18n="card_precios_empresas">Precios y Empresas</h2>
+        </div>
+        <div class="card-body">
+          <p class="config-hint" data-i18n="hint_precios_empresas">Personaliza el precio base, el precio por vuelta adicional, la moneda y los colores de cada empresa cliente.</p>
+
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label for="selectMonedaDefecto" data-i18n="label_moneda_defecto">Moneda por defecto</label>
+              <select id="selectMonedaDefecto" class="select">
+                <option value="USD">USD — Dólar</option>
+                <option value="NIO">NIO — Córdoba</option>
+                <option value="MXN">MXN — Peso mexicano</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="HNL">HNL — Lempira</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="inputPrecioDefecto" data-i18n="label_precio_defecto">Precio base por defecto</label>
+              <input type="number" id="inputPrecioDefecto" class="input" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label for="inputPrecioAdicionalDefecto" data-i18n="label_precio_adicional_defecto">Precio adicional por defecto</label>
+              <input type="number" id="inputPrecioAdicionalDefecto" class="input" min="0" step="0.01">
+            </div>
+          </div>
+
+          <div class="lista-empresas" id="listaEmpresasConfig"></div>
+
+          <button class="btn btn-secondary btn-block" id="btnMostrarFormEmpresa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span data-i18n="btn_agregar_empresa">Agregar empresa</span>
+          </button>
+
+          <div class="empresa-card empresa-card-nueva" id="formNuevaEmpresa" hidden>
+            <div class="form-row form-row-3">
+              <div class="form-group">
+                <label data-i18n="label_nombre_empresa">Nombre</label>
+                <input type="text" id="nuevaEmpresaNombre" class="input">
+              </div>
+              <div class="form-group">
+                <label data-i18n="label_logo_empresa">Logo (ruta o URL)</label>
+                <input type="text" id="nuevaEmpresaLogo" class="input" placeholder="logos/generica.png">
+              </div>
+              <div class="form-group">
+                <label data-i18n="label_moneda">Moneda</label>
+                <select id="nuevaEmpresaMoneda" class="select">
+                  <option value="USD">USD</option>
+                  <option value="NIO">NIO</option>
+                  <option value="MXN">MXN</option>
+                  <option value="EUR">EUR</option>
+                  <option value="HNL">HNL</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row form-row-3">
+              <div class="form-group">
+                <label data-i18n="label_color_principal">Color principal</label>
+                <input type="color" id="nuevaEmpresaColorPrincipal" class="color-swatch" value="#64646E">
+              </div>
+              <div class="form-group">
+                <label data-i18n="label_color_secundario">Color secundario</label>
+                <input type="color" id="nuevaEmpresaColorSecundario" class="color-swatch" value="#18181B">
+              </div>
+              <div class="form-group">
+                <label for="nuevaEmpresaPrecioBase" data-i18n="label_precio_base">Precio por 1 vuelta</label>
+                <input type="number" id="nuevaEmpresaPrecioBase" class="input" min="0" step="0.01" value="35">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="nuevaEmpresaPrecioAdicional" data-i18n="label_precio_adicional">Precio por vuelta adicional</label>
+                <input type="number" id="nuevaEmpresaPrecioAdicional" class="input" min="0" step="0.01" value="20">
+              </div>
+              <div class="form-group"></div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btnGuardarNuevaEmpresa">
+              <span data-i18n="btn_guardar_empresa">Guardar cambios</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- Datos transportista ---------- -->
+      <div class="card">
+        <div class="card-header">
+          <h2 data-i18n="card_transportista">Datos de la empresa transportista</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="inputNombreTransportista" data-i18n="label_nombre_transportista">Nombre de la empresa</label>
             <input type="text" id="inputNombreTransportista" class="input" placeholder="TransRoute S.A.">
           </div>
         </div>
       </div>
 
+      <!-- ---------- Sincronización en la nube ---------- -->
       <div class="card">
         <div class="card-header">
-          <h2>Historial</h2>
+          <h2 data-i18n="card_nube">Sincronización en la nube</h2>
+          <span class="badge badge-neutral" id="badgeEstadoNube">—</span>
         </div>
         <div class="card-body">
-          <p class="config-hint">Elimina de forma permanente todas las proformas guardadas en este equipo.</p>
+          <label class="switch-row" for="checkNube">
+            <span data-i18n="label_activar_nube">Sincronizar con Firebase</span>
+            <span class="switch">
+              <input type="checkbox" id="checkNube" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </span>
+          </label>
+          <p class="config-hint" data-i18n="hint_nube">Cuando está activo, tu historial, empresas y configuración se guardan también en la nube y se comparten entre dispositivos.</p>
+        </div>
+      </div>
+
+      <!-- ---------- Historial ---------- -->
+      <div class="card">
+        <div class="card-header">
+          <h2 data-i18n="card_historial_config">Historial</h2>
+        </div>
+        <div class="card-body">
+          <p class="config-hint" data-i18n="hint_vaciar_historial">Elimina de forma permanente todas las proformas guardadas en este equipo y en la nube.</p>
           <button class="btn btn-danger-outline" id="btnVaciarHistorial">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
-            Vaciar historial
+            <span data-i18n="btn_vaciar_historial">Vaciar historial</span>
           </button>
         </div>
       </div>
@@ -374,8 +542,57 @@
   </tr>
 </template>
 
+<!-- Plantilla de tarjeta de empresa editable (usada por script.js en Configuración) -->
+<template id="templateEmpresaCard">
+  <div class="empresa-card" data-clave="">
+    <div class="empresa-card-head">
+      <img class="empresa-card-logo" src="" alt="">
+      <input type="text" class="input input-sm empresa-card-nombre">
+      <button class="icon-btn icon-btn-danger empresa-card-eliminar" title="Eliminar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+      </button>
+    </div>
+    <div class="form-row form-row-3">
+      <div class="form-group">
+        <label data-i18n="label_logo_empresa">Logo (ruta o URL)</label>
+        <input type="text" class="input input-sm empresa-card-logo-ruta">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_color_principal">Color principal</label>
+        <input type="color" class="color-swatch empresa-card-color-principal">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_color_secundario">Color secundario</label>
+        <input type="color" class="color-swatch empresa-card-color-secundario">
+      </div>
+    </div>
+    <div class="form-row form-row-3">
+      <div class="form-group">
+        <label data-i18n="label_precio_base">Precio por 1 vuelta</label>
+        <input type="number" class="input input-sm empresa-card-precio-base" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_precio_adicional">Precio por vuelta adicional</label>
+        <input type="number" class="input input-sm empresa-card-precio-adicional" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_moneda">Moneda</label>
+        <select class="select empresa-card-moneda">
+          <option value="USD">USD</option>
+          <option value="NIO">NIO</option>
+          <option value="MXN">MXN</option>
+          <option value="EUR">EUR</option>
+          <option value="HNL">HNL</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script type="module" src="firebase-sync.js"></script>
+<script src="i18n.js"></script>
 <script src="script.js"></script>
 <script src="pdf.js"></script>
 </body>
