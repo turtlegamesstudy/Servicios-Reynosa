@@ -4,79 +4,80 @@
    ========================================================= */
 
 /* =========================================================
-   1. DATOS DE EMPRESAS
+   1. DATOS DE EMPRESAS (valores base / de fábrica)
+   "empresas" es global y mutable: se personaliza, guarda y
+   sincroniza (localStorage + Firebase) desde Configuración.
    ========================================================= */
-const empresas = {
-  mcdonalds: {
-    nombre: "McDonald's",
-    logo: "logos/mcdonalds.png",
-    colorPrincipal: "#DA291C",
-    colorSecundario: "#FFC72C"
-  },
-  kfc: {
-    nombre: "KFC",
-    logo: "logos/kfc.png",
-    colorPrincipal: "#C8102E",
-    colorSecundario: "#FFFFFF"
-  },
-  subway: {
-    nombre: "Subway",
-    logo: "logos/subway.png",
-    colorPrincipal: "#006E44",
-    colorSecundario: "#FFC72C"
-  },
-  pizzahut: {
-    nombre: "Pizza Hut",
-    logo: "logos/pizzahut.png",
-    colorPrincipal: "#D3121A",
-    colorSecundario: "#1E1E1E"
-  },
-  otra: {
-    nombre: "Otra Empresa",
-    logo: "logos/generica.png",
-    colorPrincipal: "#64646E",
-    colorSecundario: "#18181B"
-  }
+const EMPRESAS_BASE = {
+  mcdonalds: { nombre: "McDonald's", logo: "logos/mcdonalds.png", colorPrincipal: "#DA291C", colorSecundario: "#FFC72C", precioBase: 35, precioVueltaAdicional: 20, moneda: "USD" },
+  kfc: { nombre: "KFC", logo: "logos/kfc.png", colorPrincipal: "#C8102E", colorSecundario: "#FFFFFF", precioBase: 35, precioVueltaAdicional: 20, moneda: "USD" },
+  subway: { nombre: "Subway", logo: "logos/subway.png", colorPrincipal: "#006E44", colorSecundario: "#FFC72C", precioBase: 35, precioVueltaAdicional: 20, moneda: "USD" },
+  pizzahut: { nombre: "Pizza Hut", logo: "logos/pizzahut.png", colorPrincipal: "#D3121A", colorSecundario: "#1E1E1E", precioBase: 40, precioVueltaAdicional: 20, moneda: "USD" },
+  otra: { nombre: "Otra Empresa", logo: "logos/generica.png", colorPrincipal: "#64646E", colorSecundario: "#18181B", precioBase: 35, precioVueltaAdicional: 20, moneda: "USD" }
 };
+
+let empresas = JSON.parse(JSON.stringify(EMPRESAS_BASE));
+
+const SIMBOLOS_MONEDA = { USD: "$", NIO: "C$", MXN: "$", EUR: "€", HNL: "L" };
 
 /* =========================================================
    2. ALMACENAMIENTO PERSISTENTE (localStorage)
    ========================================================= */
 const CLAVE_HISTORIAL = "transroute_historial";
 const CLAVE_CONFIGURACION = "transroute_configuracion";
+const CLAVE_EMPRESAS = "transroute_empresas";
 
 /* =========================================================
    3. ESTADO GLOBAL DE LA APLICACIÓN
    ========================================================= */
 const estado = {
   empresaActual: "mcdonalds",
-  precioBase: 35,          // Precio configurable para 1 vuelta (35 o 40 USD)
-  precioVueltaAdicional: 20, // Precio fijo por vuelta cuando vueltas >= 2
-  recorridos: [],           // { id, hora, personas, vueltas, costo }
-  idEdicionActual: null,    // id del recorrido en edición (null = ninguno)
+  recorridos: [],            // { id, hora, personas, vueltas, costo }
+  idEdicionActual: null,     // id del recorrido en edición (null = ninguno)
   contadorId: 1,
-  vistaActual: "nueva",     // "nueva" | "historial" | "configuracion"
+  vistaActual: "nueva",      // "nueva" | "historial" | "configuracion"
   proformaIdEnEdicion: null, // id de la proforma del historial que se está sobrescribiendo (null = nueva)
   historial: [],             // proformas guardadas
   configuracion: {
     precioDefecto: 35,
-    nombreTransportista: "TransRoute S.A."
+    precioVueltaAdicionalDefecto: 20,
+    monedaDefecto: "USD",
+    nombreTransportista: "TransRoute S.A.",
+    idioma: "es",
+    tema: "claro",           // "claro" | "oscuro" | "auto"
+    colorAcento: "#6366f1",
+    densidad: "comoda",      // "comoda" | "compacta"
+    sincronizacionNube: true
   }
 };
+window.estado = estado; // usado por i18n.js para saber el idioma activo
+
+let firebaseListo = false;
+let appIniciada = false;
+let sincronizandoDesdeNube = false;
+
+window.addEventListener("firebase-listo", () => {
+  firebaseListo = true;
+  if (appIniciada) conectarFirebase();
+});
 
 /* =========================================================
-   3. REFERENCIAS AL DOM
+   4. REFERENCIAS AL DOM
    ========================================================= */
 const dom = {
   selectEmpresa: document.getElementById("selectEmpresa"),
   empresaLogoPreview: document.getElementById("empresaLogoPreview"),
   empresaNombrePreview: document.getElementById("empresaNombrePreview"),
+  empresaPreview: document.getElementById("empresaPreview"),
 
   inputFecha: document.getElementById("inputFecha"),
   inputNumeroProforma: document.getElementById("inputNumeroProforma"),
   inputSucursal: document.getElementById("inputSucursal"),
   inputObservaciones: document.getElementById("inputObservaciones"),
-  selectPrecioVuelta: document.getElementById("selectPrecioVuelta"),
+  inputPrecioVuelta: document.getElementById("inputPrecioVuelta"),
+  inputPrecioAdicional: document.getElementById("inputPrecioAdicional"),
+  inputDescuento: document.getElementById("inputDescuento"),
+  inputImpuesto: document.getElementById("inputImpuesto"),
 
   inputHoraSalida: document.getElementById("inputHoraSalida"),
   inputPersonas: document.getElementById("inputPersonas"),
@@ -88,9 +89,14 @@ const dom = {
   badgeCantidadRecorridos: document.getElementById("badgeCantidadRecorridos"),
 
   subtotalValor: document.getElementById("subtotalValor"),
+  filaDescuentoTotales: document.getElementById("filaDescuentoTotales"),
+  descuentoValor: document.getElementById("descuentoValor"),
+  filaImpuestoTotales: document.getElementById("filaImpuestoTotales"),
+  impuestoValor: document.getElementById("impuestoValor"),
   totalValor: document.getElementById("totalValor"),
 
   templateFilaEdicion: document.getElementById("templateFilaEdicion"),
+  templateEmpresaCard: document.getElementById("templateEmpresaCard"),
 
   btnGenerarPDF: document.getElementById("btnGenerarPDF"),
   btnGuardarProforma: document.getElementById("btnGuardarProforma"),
@@ -110,10 +116,41 @@ const dom = {
   tablaHistorialBody: document.getElementById("tablaHistorialBody"),
   badgeHistorialTotal: document.getElementById("badgeHistorialTotal"),
 
-  // Configuración
-  selectPrecioDefecto: document.getElementById("selectPrecioDefecto"),
+  // Configuración — apariencia
+  segmentoTema: document.getElementById("segmentoTema"),
+  segmentoDensidad: document.getElementById("segmentoDensidad"),
+  inputColorAcento: document.getElementById("inputColorAcento"),
+  valorColorAcento: document.getElementById("valorColorAcento"),
+
+  // Configuración — idioma
+  selectIdioma: document.getElementById("selectIdioma"),
+
+  // Configuración — precios y empresas
+  selectMonedaDefecto: document.getElementById("selectMonedaDefecto"),
+  inputPrecioDefecto: document.getElementById("inputPrecioDefecto"),
+  inputPrecioAdicionalDefecto: document.getElementById("inputPrecioAdicionalDefecto"),
+  listaEmpresasConfig: document.getElementById("listaEmpresasConfig"),
+  btnMostrarFormEmpresa: document.getElementById("btnMostrarFormEmpresa"),
+  formNuevaEmpresa: document.getElementById("formNuevaEmpresa"),
+  nuevaEmpresaNombre: document.getElementById("nuevaEmpresaNombre"),
+  nuevaEmpresaLogo: document.getElementById("nuevaEmpresaLogo"),
+  nuevaEmpresaMoneda: document.getElementById("nuevaEmpresaMoneda"),
+  nuevaEmpresaColorPrincipal: document.getElementById("nuevaEmpresaColorPrincipal"),
+  nuevaEmpresaColorSecundario: document.getElementById("nuevaEmpresaColorSecundario"),
+  nuevaEmpresaPrecioBase: document.getElementById("nuevaEmpresaPrecioBase"),
+  nuevaEmpresaPrecioAdicional: document.getElementById("nuevaEmpresaPrecioAdicional"),
+  btnGuardarNuevaEmpresa: document.getElementById("btnGuardarNuevaEmpresa"),
+
+  // Configuración — transportista
   inputNombreTransportista: document.getElementById("inputNombreTransportista"),
   btnVaciarHistorial: document.getElementById("btnVaciarHistorial"),
+
+  // Configuración — nube
+  checkNube: document.getElementById("checkNube"),
+  badgeEstadoNube: document.getElementById("badgeEstadoNube"),
+  pildoraNube: document.getElementById("pildoraNube"),
+  puntoNube: document.getElementById("puntoNube"),
+  textoNube: document.getElementById("textoNube"),
 
   toast: document.getElementById("toast"),
 
@@ -133,16 +170,20 @@ const dom = {
 };
 
 /* =========================================================
-   4. UTILIDADES
+   5. UTILIDADES
    ========================================================= */
 
 /**
- * Formatea un número como moneda en dólares.
+ * Formatea un número como moneda, según el código de moneda dado
+ * (o la moneda por defecto configurada si no se especifica).
  * @param {number} valor
+ * @param {string} [moneda]
  * @returns {string}
  */
-function formatearMoneda(valor) {
-  return "$" + Number(valor).toFixed(2);
+function formatearMoneda(valor, moneda) {
+  const codigo = moneda || (estado.configuracion && estado.configuracion.monedaDefecto) || "USD";
+  const simbolo = SIMBOLOS_MONEDA[codigo] || "$";
+  return simbolo + Number(valor || 0).toFixed(2);
 }
 
 /**
@@ -162,38 +203,42 @@ function formatearHora(hora24) {
 }
 
 /**
- * Formatea una fecha ISO (YYYY-MM-DD) a formato legible en español.
+ * Formatea una fecha ISO (YYYY-MM-DD) a formato legible en español o inglés.
  * @param {string} fechaISO
  * @returns {string}
  */
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "—";
   const [anio, mes, dia] = fechaISO.split("-");
-  const meses = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
+  const mesesEs = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const mesesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const idioma = estado.configuracion.idioma === "en" ? "en" : "es";
+  const meses = idioma === "en" ? mesesEn : mesesEs;
+
+  if (idioma === "en") {
+    return `${meses[parseInt(mes, 10) - 1]} ${parseInt(dia, 10)}, ${anio}`;
+  }
   return `${parseInt(dia, 10)} de ${meses[parseInt(mes, 10) - 1]}, ${anio}`;
 }
 
+/**
+ * Devuelve el objeto de la empresa actualmente seleccionada,
+ * con una empresa "otra" de respaldo si algo faltara.
+ * @returns {object}
+ */
+function empresaActiva() {
+  return empresas[estado.empresaActual] || empresas.otra || Object.values(empresas)[0];
+}
+
 /* =========================================================
-   5. LÓGICA DE NEGOCIO - CÁLCULO DE COSTOS
+   6. LÓGICA DE NEGOCIO - CÁLCULO DE COSTOS
    ========================================================= */
 
 /**
  * Calcula el costo de un recorrido según las reglas de negocio.
- *
- * Regla exacta:
- *  - Si vueltas == 1  -> costo = precioBase (35 o 40 USD, configurable)
- *  - Si vueltas >= 2  -> costo = vueltas * precioVueltaAdicional (20 USD c/u)
- *
- * Ejemplos (precioVueltaAdicional = 20):
- *  1 vuelta  -> 35 (o 40 según configuración)
- *  3 vueltas -> 3 * 20 = 60
- *  5 vueltas -> 5 * 20 = 100
- *
+ *  - Si vueltas == 1  -> costo = precioBase (configurable por empresa)
+ *  - Si vueltas >= 2  -> costo = vueltas * precioVueltaAdicional
  * La cantidad de personas NO afecta el costo. Válido para 1-14 personas.
- *
  * @param {number} vueltas
  * @param {number} precioBase
  * @param {number} precioVueltaAdicional
@@ -209,13 +254,32 @@ function calcularCosto(vueltas, precioBase, precioVueltaAdicional) {
   return numVueltas * precioVueltaAdicional;
 }
 
+/**
+ * Calcula subtotal, descuento, impuesto y total a partir de los
+ * recorridos actuales y los porcentajes de descuento/impuesto
+ * indicados en el formulario.
+ * @returns {{subtotal:number, descuento:number, impuesto:number, total:number}}
+ */
+function calcularTotales() {
+  const subtotal = estado.recorridos.reduce((acumulado, recorrido) => acumulado + recorrido.costo, 0);
+  const porcentajeDescuento = parseFloat(dom.inputDescuento.value) || 0;
+  const porcentajeImpuesto = parseFloat(dom.inputImpuesto.value) || 0;
+
+  const descuento = subtotal * (porcentajeDescuento / 100);
+  const baseConDescuento = subtotal - descuento;
+  const impuesto = baseConDescuento * (porcentajeImpuesto / 100);
+  const total = baseConDescuento + impuesto;
+
+  return { subtotal, descuento, impuesto, total };
+}
+
 /* =========================================================
-   6. CAMBIO DE EMPRESA
+   7. CAMBIO DE EMPRESA
    ========================================================= */
 
 /**
- * Actualiza toda la interfaz (logo, nombre, colores) según la empresa
- * seleccionada en el formulario.
+ * Actualiza toda la interfaz (logo, nombre, colores, precios) según
+ * la empresa seleccionada en el formulario.
  */
 function cambiarEmpresa() {
   const claveEmpresa = dom.selectEmpresa.value;
@@ -230,21 +294,50 @@ function cambiarEmpresa() {
   dom.empresaLogoPreview.alt = "Logo " + empresa.nombre;
   dom.empresaNombrePreview.textContent = empresa.nombre;
 
+  const tagMoneda = dom.empresaPreview.querySelector(".empresa-preview-moneda") || (() => {
+    const span = document.createElement("span");
+    span.className = "empresa-preview-moneda";
+    dom.empresaPreview.querySelector("div").appendChild(span);
+    return span;
+  })();
+  tagMoneda.textContent = `${t("empresa_preview_tag")} · ${empresa.moneda || estado.configuracion.monedaDefecto}`;
+
+  // Precargar precios propios de la empresa (personalización por cliente)
+  dom.inputPrecioVuelta.value = empresa.precioBase;
+  dom.inputPrecioAdicional.value = empresa.precioVueltaAdicional;
+
   // Actualizar colores dinámicos vía variables CSS
   document.documentElement.style.setProperty("--empresa-primary", empresa.colorPrincipal);
   document.documentElement.style.setProperty("--empresa-secondary", empresa.colorSecundario);
 
+  recalcularTodosLosCostos();
   actualizarVistaPrevia();
 }
 
+/**
+ * Reconstruye las <option> del selector de empresa a partir del
+ * objeto "empresas" (útil tras agregar/eliminar/editar empresas).
+ */
+function renderizarSelectEmpresa() {
+  const valorPrevio = dom.selectEmpresa.value;
+  dom.selectEmpresa.innerHTML = "";
+
+  Object.keys(empresas).forEach((clave) => {
+    const opcion = document.createElement("option");
+    opcion.value = clave;
+    opcion.textContent = clave === "otra" ? t("opt_otra") : empresas[clave].nombre;
+    dom.selectEmpresa.appendChild(opcion);
+  });
+
+  if (empresas[valorPrevio]) {
+    dom.selectEmpresa.value = valorPrevio;
+  }
+}
+
 /* =========================================================
-   7. GESTIÓN DE RECORRIDOS (CRUD EN MEMORIA)
+   8. GESTIÓN DE RECORRIDOS (CRUD EN MEMORIA)
    ========================================================= */
 
-/**
- * Lee los valores del formulario "Agregar Recorrido", valida,
- * calcula el costo y agrega el recorrido al estado.
- */
 function agregarRecorrido() {
   const hora = dom.inputHoraSalida.value;
   const personas = parseInt(dom.inputPersonas.value, 10);
@@ -265,8 +358,9 @@ function agregarRecorrido() {
     return;
   }
 
-  const precioBase = parseInt(dom.selectPrecioVuelta.value, 10);
-  const costo = calcularCosto(vueltas, precioBase, estado.precioVueltaAdicional);
+  const precioBase = parseFloat(dom.inputPrecioVuelta.value) || 0;
+  const precioAdicional = parseFloat(dom.inputPrecioAdicional.value) || 0;
+  const costo = calcularCosto(vueltas, precioBase, precioAdicional);
 
   const nuevoRecorrido = {
     id: estado.contadorId++,
@@ -289,10 +383,6 @@ function agregarRecorrido() {
   actualizarVistaPrevia();
 }
 
-/**
- * Elimina un recorrido del estado según su id y refresca la UI.
- * @param {number} id
- */
 function eliminarRecorrido(id) {
   estado.recorridos = estado.recorridos.filter((recorrido) => recorrido.id !== id);
 
@@ -305,21 +395,11 @@ function eliminarRecorrido(id) {
   actualizarVistaPrevia();
 }
 
-/**
- * Activa el modo edición para un recorrido específico, reemplazando
- * su fila en la tabla por una fila editable.
- * @param {number} id
- */
 function editarRecorrido(id) {
   estado.idEdicionActual = id;
   actualizarTabla();
 }
 
-/**
- * Guarda los cambios realizados en la fila de edición activa,
- * recalcula el costo y vuelve al modo lectura.
- * @param {number} id
- */
 function guardarEdicionRecorrido(id) {
   const fila = dom.tablaRecorridosBody.querySelector(`tr[data-id="${id}"]`);
   if (!fila) return;
@@ -346,12 +426,13 @@ function guardarEdicionRecorrido(id) {
   const recorrido = estado.recorridos.find((r) => r.id === id);
   if (!recorrido) return;
 
-  const precioBase = parseInt(dom.selectPrecioVuelta.value, 10);
+  const precioBase = parseFloat(dom.inputPrecioVuelta.value) || 0;
+  const precioAdicional = parseFloat(dom.inputPrecioAdicional.value) || 0;
 
   recorrido.hora = nuevaHora;
   recorrido.personas = nuevasPersonas;
   recorrido.vueltas = nuevasVueltas;
-  recorrido.costo = calcularCosto(nuevasVueltas, precioBase, estado.precioVueltaAdicional);
+  recorrido.costo = calcularCosto(nuevasVueltas, precioBase, precioAdicional);
 
   estado.idEdicionActual = null;
 
@@ -360,9 +441,6 @@ function guardarEdicionRecorrido(id) {
   actualizarVistaPrevia();
 }
 
-/**
- * Cancela la edición activa sin guardar cambios.
- */
 function cancelarEdicionRecorrido() {
   estado.idEdicionActual = null;
   actualizarTabla();
@@ -370,13 +448,15 @@ function cancelarEdicionRecorrido() {
 
 /**
  * Recalcula el costo de todos los recorridos existentes cuando cambia
- * el precio base configurable (35 / 40 USD), manteniendo consistencia.
+ * el precio base o el precio por vuelta adicional (propios o de la
+ * empresa seleccionada), manteniendo consistencia.
  */
 function recalcularTodosLosCostos() {
-  const precioBase = parseInt(dom.selectPrecioVuelta.value, 10);
+  const precioBase = parseFloat(dom.inputPrecioVuelta.value) || 0;
+  const precioAdicional = parseFloat(dom.inputPrecioAdicional.value) || 0;
 
   estado.recorridos.forEach((recorrido) => {
-    recorrido.costo = calcularCosto(recorrido.vueltas, precioBase, estado.precioVueltaAdicional);
+    recorrido.costo = calcularCosto(recorrido.vueltas, precioBase, precioAdicional);
   });
 
   actualizarTabla();
@@ -385,43 +465,35 @@ function recalcularTodosLosCostos() {
 }
 
 /* =========================================================
-   8. RENDERIZADO DE TABLA
+   9. RENDERIZADO DE TABLA
    ========================================================= */
 
-/**
- * Construye y renderiza el contenido de la tabla de recorridos
- * a partir del estado actual. Maneja tanto filas normales como
- * la fila en modo edición.
- */
 function actualizarTabla() {
   dom.tablaRecorridosBody.innerHTML = "";
 
   if (estado.recorridos.length === 0) {
     const filaVacia = document.createElement("tr");
     filaVacia.className = "empty-row";
-    filaVacia.innerHTML = `<td colspan="5">Aún no se han agregado recorridos.</td>`;
+    filaVacia.innerHTML = `<td colspan="5">${t("empty_recorridos")}</td>`;
     dom.tablaRecorridosBody.appendChild(filaVacia);
     dom.badgeCantidadRecorridos.textContent = "0";
     return;
   }
 
+  const moneda = (empresaActiva() && empresaActiva().moneda) || estado.configuracion.monedaDefecto;
+
   estado.recorridos.forEach((recorrido) => {
     if (estado.idEdicionActual === recorrido.id) {
-      dom.tablaRecorridosBody.appendChild(crearFilaEdicion(recorrido));
+      dom.tablaRecorridosBody.appendChild(crearFilaEdicion(recorrido, moneda));
     } else {
-      dom.tablaRecorridosBody.appendChild(crearFilaLectura(recorrido));
+      dom.tablaRecorridosBody.appendChild(crearFilaLectura(recorrido, moneda));
     }
   });
 
   dom.badgeCantidadRecorridos.textContent = String(estado.recorridos.length);
 }
 
-/**
- * Crea una fila <tr> en modo lectura para un recorrido.
- * @param {{id:number, hora:string, personas:number, vueltas:number, costo:number}} recorrido
- * @returns {HTMLTableRowElement}
- */
-function crearFilaLectura(recorrido) {
+function crearFilaLectura(recorrido, moneda) {
   const fila = document.createElement("tr");
   fila.dataset.id = recorrido.id;
 
@@ -429,7 +501,7 @@ function crearFilaLectura(recorrido) {
     <td>${formatearHora(recorrido.hora)}</td>
     <td>${recorrido.personas}</td>
     <td>${recorrido.vueltas}</td>
-    <td>${formatearMoneda(recorrido.costo)}</td>
+    <td>${formatearMoneda(recorrido.costo, moneda)}</td>
     <td class="th-actions">
       <button class="icon-btn btn-editar" title="Editar" aria-label="Editar recorrido">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -446,13 +518,7 @@ function crearFilaLectura(recorrido) {
   return fila;
 }
 
-/**
- * Crea una fila <tr> en modo edición para un recorrido, a partir
- * de la plantilla <template id="templateFilaEdicion">.
- * @param {{id:number, hora:string, personas:number, vueltas:number, costo:number}} recorrido
- * @returns {HTMLTableRowElement}
- */
-function crearFilaEdicion(recorrido) {
+function crearFilaEdicion(recorrido, moneda) {
   const contenido = dom.templateFilaEdicion.content.cloneNode(true);
   const fila = contenido.querySelector("tr");
   fila.dataset.id = recorrido.id;
@@ -465,13 +531,13 @@ function crearFilaEdicion(recorrido) {
   inputHora.value = recorrido.hora;
   inputPersonas.value = recorrido.personas;
   inputVueltas.value = recorrido.vueltas;
-  celdaCosto.textContent = formatearMoneda(recorrido.costo);
+  celdaCosto.textContent = formatearMoneda(recorrido.costo, moneda);
 
-  // Recalcular el costo en vivo mientras se edita el número de vueltas
   inputVueltas.addEventListener("input", () => {
-    const precioBase = parseInt(dom.selectPrecioVuelta.value, 10);
+    const precioBase = parseFloat(dom.inputPrecioVuelta.value) || 0;
+    const precioAdicional = parseFloat(dom.inputPrecioAdicional.value) || 0;
     const vueltasTemp = parseInt(inputVueltas.value, 10) || 0;
-    celdaCosto.textContent = formatearMoneda(calcularCosto(vueltasTemp, precioBase, estado.precioVueltaAdicional));
+    celdaCosto.textContent = formatearMoneda(calcularCosto(vueltasTemp, precioBase, precioAdicional), moneda);
   });
 
   fila.querySelector(".btn-guardar-edicion").addEventListener("click", () => guardarEdicionRecorrido(recorrido.id));
@@ -481,33 +547,31 @@ function crearFilaEdicion(recorrido) {
 }
 
 /* =========================================================
-   9. TOTALES
+   10. TOTALES
    ========================================================= */
 
-/**
- * Calcula el subtotal y total a partir de los recorridos actuales
- * y actualiza los elementos correspondientes en el DOM.
- * (Subtotal y Total son iguales por ahora; se separan para permitir
- * agregar impuestos/descuentos en el futuro sin romper la estructura).
- */
 function actualizarTotal() {
-  const subtotal = estado.recorridos.reduce((acumulado, recorrido) => acumulado + recorrido.costo, 0);
-  const total = subtotal; // Punto de extensión: aquí se podrían aplicar impuestos o descuentos.
+  const moneda = (empresaActiva() && empresaActiva().moneda) || estado.configuracion.monedaDefecto;
+  const { subtotal, descuento, impuesto, total } = calcularTotales();
 
-  dom.subtotalValor.textContent = formatearMoneda(subtotal);
-  dom.totalValor.textContent = formatearMoneda(total);
+  dom.subtotalValor.textContent = formatearMoneda(subtotal, moneda);
+
+  dom.filaDescuentoTotales.hidden = descuento <= 0;
+  dom.descuentoValor.textContent = "-" + formatearMoneda(descuento, moneda);
+
+  dom.filaImpuestoTotales.hidden = impuesto <= 0;
+  dom.impuestoValor.textContent = "+" + formatearMoneda(impuesto, moneda);
+
+  dom.totalValor.textContent = formatearMoneda(total, moneda);
 }
 
 /* =========================================================
-   10. VISTA PREVIA DE LA PROFORMA
+   11. VISTA PREVIA DE LA PROFORMA
    ========================================================= */
 
-/**
- * Sincroniza la vista previa del documento con el estado actual
- * del formulario: empresa, datos generales, tabla y total.
- */
 function actualizarVistaPrevia() {
-  const empresa = empresas[estado.empresaActual];
+  const empresa = empresaActiva();
+  const moneda = empresa.moneda || estado.configuracion.monedaDefecto;
 
   dom.previewNombreTransportista.textContent = estado.configuracion.nombreTransportista;
   dom.previewLogoCliente.src = empresa.logo;
@@ -519,11 +583,10 @@ function actualizarVistaPrevia() {
   dom.previewSucursal.textContent = dom.inputSucursal.value.trim() || "—";
   dom.previewObservaciones.textContent = dom.inputObservaciones.value.trim() || "—";
 
-  // Tabla de la vista previa
   dom.previewTablaBody.innerHTML = "";
 
   if (estado.recorridos.length === 0) {
-    dom.previewTablaBody.innerHTML = `<tr class="empty-row"><td colspan="4">Sin recorridos aún.</td></tr>`;
+    dom.previewTablaBody.innerHTML = `<tr class="empty-row"><td colspan="4">${t("empty_recorridos")}</td></tr>`;
   } else {
     estado.recorridos.forEach((recorrido) => {
       const fila = document.createElement("tr");
@@ -531,26 +594,21 @@ function actualizarVistaPrevia() {
         <td>${formatearHora(recorrido.hora)}</td>
         <td>${recorrido.personas}</td>
         <td>${recorrido.vueltas}</td>
-        <td>${formatearMoneda(recorrido.costo)}</td>
+        <td>${formatearMoneda(recorrido.costo, moneda)}</td>
       `;
       dom.previewTablaBody.appendChild(fila);
     });
   }
 
-  const total = estado.recorridos.reduce((acumulado, recorrido) => acumulado + recorrido.costo, 0);
-  dom.previewTotal.textContent = formatearMoneda(total);
+  const { total } = calcularTotales();
+  dom.previewTotal.textContent = formatearMoneda(total, moneda);
 }
 
 /* =========================================================
-   11. NOTIFICACIONES (TOAST)
+   12. NOTIFICACIONES (TOAST)
    ========================================================= */
 let toastTimeoutId = null;
 
-/**
- * Muestra un mensaje breve flotante en la esquina inferior derecha.
- * @param {string} mensaje
- * @param {"success"|"danger"|"neutral"} tipo
- */
 function mostrarToast(mensaje, tipo) {
   if (!dom.toast) return;
 
@@ -569,13 +627,70 @@ function mostrarToast(mensaje, tipo) {
 }
 
 /* =========================================================
-   12. CONFIGURACIÓN PERSISTENTE
+   13. APARIENCIA (TEMA / COLOR DE ACENTO / DENSIDAD)
    ========================================================= */
 
 /**
- * Carga la configuración guardada en localStorage (si existe) y la
- * aplica al estado y al formulario correspondiente.
+ * Aplica el tema claro/oscuro/automático al documento y resalta
+ * el botón correspondiente en el segmento de Configuración.
+ * @param {"claro"|"oscuro"|"auto"} tema
  */
+function aplicarTema(tema) {
+  let temaResuelto = tema;
+  if (tema === "auto") {
+    temaResuelto = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "oscuro" : "claro";
+  }
+  document.documentElement.setAttribute("data-tema", temaResuelto);
+
+  if (dom.segmentoTema) {
+    dom.segmentoTema.querySelectorAll(".segmento-btn").forEach((boton) => {
+      boton.classList.toggle("activo", boton.dataset.tema === tema);
+    });
+  }
+}
+
+/**
+ * Aplica el color de acento elegido a la variable CSS --secondary,
+ * usada en botones, focos y elementos destacados de la interfaz.
+ * @param {string} colorHex
+ */
+function aplicarColorAcento(colorHex) {
+  document.documentElement.style.setProperty("--secondary", colorHex);
+  if (dom.inputColorAcento) dom.inputColorAcento.value = colorHex;
+  if (dom.valorColorAcento) dom.valorColorAcento.textContent = colorHex.toUpperCase();
+}
+
+/**
+ * Aplica la densidad de la interfaz (cómoda / compacta).
+ * @param {"comoda"|"compacta"} densidad
+ */
+function aplicarDensidad(densidad) {
+  document.documentElement.setAttribute("data-densidad", densidad);
+  if (dom.segmentoDensidad) {
+    dom.segmentoDensidad.querySelectorAll(".segmento-btn").forEach((boton) => {
+      boton.classList.toggle("activo", boton.dataset.densidad === densidad);
+    });
+  }
+}
+
+/**
+ * Aplica de una vez tema, color de acento, densidad e idioma según
+ * la configuración actual en memoria. Se usa tanto al iniciar como
+ * al recibir cambios sincronizados desde otro dispositivo.
+ */
+function aplicarConfiguracionCompleta() {
+  aplicarTema(estado.configuracion.tema);
+  aplicarColorAcento(estado.configuracion.colorAcento);
+  aplicarDensidad(estado.configuracion.densidad);
+  if (dom.selectIdioma) dom.selectIdioma.value = estado.configuracion.idioma;
+  aplicarIdiomaEnDOM();
+  renderizarSelectEmpresa();
+}
+
+/* =========================================================
+   14. CONFIGURACIÓN PERSISTENTE
+   ========================================================= */
+
 function cargarConfiguracion() {
   try {
     const guardada = JSON.parse(localStorage.getItem(CLAVE_CONFIGURACION));
@@ -586,33 +701,240 @@ function cargarConfiguracion() {
     console.warn("No se pudo leer la configuración guardada:", error);
   }
 
-  dom.selectPrecioDefecto.value = String(estado.configuracion.precioDefecto);
   dom.inputNombreTransportista.value = estado.configuracion.nombreTransportista;
-  dom.selectPrecioVuelta.value = String(estado.configuracion.precioDefecto);
+  dom.selectMonedaDefecto.value = estado.configuracion.monedaDefecto;
+  dom.inputPrecioDefecto.value = estado.configuracion.precioDefecto;
+  dom.inputPrecioAdicionalDefecto.value = estado.configuracion.precioVueltaAdicionalDefecto;
+  dom.checkNube.checked = estado.configuracion.sincronizacionNube !== false;
 }
 
 /**
- * Persiste la configuración actual del formulario de Configuración
- * en localStorage y actualiza el estado en memoria.
+ * Persiste solo en localStorage (usado también al recibir cambios
+ * desde Firebase, para no reenviarlos de vuelta a la nube).
+ */
+function persistirConfiguracionLocal() {
+  localStorage.setItem(CLAVE_CONFIGURACION, JSON.stringify(estado.configuracion));
+}
+
+/**
+ * Lee el formulario de Configuración, actualiza el estado, persiste
+ * localmente y sincroniza con Firebase (si está disponible y activo).
  */
 function guardarConfiguracion() {
-  estado.configuracion.precioDefecto = parseInt(dom.selectPrecioDefecto.value, 10);
   estado.configuracion.nombreTransportista = dom.inputNombreTransportista.value.trim() || "TransRoute S.A.";
+  estado.configuracion.monedaDefecto = dom.selectMonedaDefecto.value;
+  estado.configuracion.precioDefecto = parseFloat(dom.inputPrecioDefecto.value) || 0;
+  estado.configuracion.precioVueltaAdicionalDefecto = parseFloat(dom.inputPrecioAdicionalDefecto.value) || 0;
 
-  localStorage.setItem(CLAVE_CONFIGURACION, JSON.stringify(estado.configuracion));
+  persistirConfiguracionLocal();
+  if (!sincronizandoDesdeNube && nubeActiva()) {
+    window.FirebaseSync.guardarConfiguracion(estado.configuracion);
+  }
 
   actualizarVistaPrevia();
-  mostrarToast("Configuración guardada", "success");
+  mostrarToast(t("btn_guardar") + " ✓", "success");
+}
+
+/**
+ * Cambia y persiste una sola preferencia de apariencia/idioma sin
+ * necesidad de pasar por el resto del formulario de Configuración.
+ * @param {string} clave
+ * @param {*} valor
+ */
+function actualizarPreferencia(clave, valor) {
+  estado.configuracion[clave] = valor;
+  persistirConfiguracionLocal();
+  if (!sincronizandoDesdeNube && nubeActiva()) {
+    window.FirebaseSync.guardarConfiguracion(estado.configuracion);
+  }
 }
 
 /* =========================================================
-   13. HISTORIAL PERSISTENTE (CRUD SOBRE LOCALSTORAGE)
+   15. GESTIÓN DE EMPRESAS (PRECIOS, COLORES, MONEDA)
    ========================================================= */
 
+function cargarEmpresas() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_EMPRESAS));
+    if (guardado && Object.keys(guardado).length > 0) {
+      empresas = guardado;
+    }
+  } catch (error) {
+    console.warn("No se pudo leer las empresas guardadas:", error);
+  }
+}
+
+function persistirEmpresasLocal() {
+  localStorage.setItem(CLAVE_EMPRESAS, JSON.stringify(empresas));
+}
+
+function persistirEmpresas() {
+  persistirEmpresasLocal();
+  if (!sincronizandoDesdeNube && nubeActiva()) {
+    window.FirebaseSync.guardarEmpresas(empresas);
+  }
+}
+
 /**
- * Lee el historial de proformas guardadas desde localStorage y
- * lo carga en el estado en memoria.
+ * Genera una clave única y legible (slug) a partir del nombre de
+ * una nueva empresa, evitando colisiones con empresas existentes.
+ * @param {string} nombre
+ * @returns {string}
  */
+function generarClaveEmpresa(nombre) {
+  let base = nombre
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "empresa";
+
+  let clave = base;
+  let contador = 1;
+  while (empresas[clave]) {
+    clave = `${base}_${contador++}`;
+  }
+  return clave;
+}
+
+/**
+ * Renderiza la lista de tarjetas editables de empresas dentro de
+ * Configuración, a partir de la plantilla #templateEmpresaCard.
+ */
+function renderizarListaEmpresasConfig() {
+  dom.listaEmpresasConfig.innerHTML = "";
+
+  Object.keys(empresas).forEach((clave) => {
+    const empresa = empresas[clave];
+    const nodo = dom.templateEmpresaCard.content.cloneNode(true);
+    const tarjeta = nodo.querySelector(".empresa-card");
+    tarjeta.dataset.clave = clave;
+
+    const logoImg = tarjeta.querySelector(".empresa-card-logo");
+    const inputNombre = tarjeta.querySelector(".empresa-card-nombre");
+    const btnEliminar = tarjeta.querySelector(".empresa-card-eliminar");
+    const inputLogoRuta = tarjeta.querySelector(".empresa-card-logo-ruta");
+    const inputColorPrincipal = tarjeta.querySelector(".empresa-card-color-principal");
+    const inputColorSecundario = tarjeta.querySelector(".empresa-card-color-secundario");
+    const inputPrecioBase = tarjeta.querySelector(".empresa-card-precio-base");
+    const inputPrecioAdicional = tarjeta.querySelector(".empresa-card-precio-adicional");
+    const selectMoneda = tarjeta.querySelector(".empresa-card-moneda");
+
+    logoImg.src = empresa.logo;
+    logoImg.alt = empresa.nombre;
+    inputNombre.value = empresa.nombre;
+    inputLogoRuta.value = empresa.logo;
+    inputColorPrincipal.value = empresa.colorPrincipal;
+    inputColorSecundario.value = empresa.colorSecundario;
+    inputPrecioBase.value = empresa.precioBase;
+    inputPrecioAdicional.value = empresa.precioVueltaAdicional;
+    selectMoneda.value = empresa.moneda || "USD";
+
+    // La empresa "otra" es el respaldo genérico del sistema y no
+    // se puede eliminar ni renombrar, para que siempre exista al
+    // menos una opción disponible.
+    if (clave === "otra") {
+      btnEliminar.hidden = true;
+      inputNombre.disabled = true;
+    }
+
+    const guardarCambio = () => {
+      empresa.nombre = inputNombre.value.trim() || empresa.nombre;
+      empresa.logo = inputLogoRuta.value.trim() || empresa.logo;
+      empresa.colorPrincipal = inputColorPrincipal.value;
+      empresa.colorSecundario = inputColorSecundario.value;
+      empresa.precioBase = parseFloat(inputPrecioBase.value) || 0;
+      empresa.precioVueltaAdicional = parseFloat(inputPrecioAdicional.value) || 0;
+      empresa.moneda = selectMoneda.value;
+
+      logoImg.src = empresa.logo;
+      persistirEmpresas();
+      renderizarSelectEmpresa();
+
+      if (estado.empresaActual === clave) {
+        cambiarEmpresa();
+      }
+      mostrarToast(t("btn_guardar_empresa") + " ✓", "success");
+    };
+
+    [inputNombre, inputLogoRuta, inputColorPrincipal, inputColorSecundario, inputPrecioBase, inputPrecioAdicional, selectMoneda]
+      .forEach((campo) => campo.addEventListener("change", guardarCambio));
+
+    btnEliminar.addEventListener("click", () => eliminarEmpresa(clave));
+
+    dom.listaEmpresasConfig.appendChild(tarjeta);
+  });
+}
+
+/**
+ * Elimina una empresa personalizada (nunca la de respaldo "otra"),
+ * previa confirmación, y reubica el formulario si era la activa.
+ * @param {string} clave
+ */
+function eliminarEmpresa(clave) {
+  if (clave === "otra") return;
+
+  const confirmado = confirm(estado.configuracion.idioma === "en"
+    ? "Delete this company? This cannot be undone."
+    : "¿Eliminar esta empresa? Esta acción no se puede deshacer.");
+  if (!confirmado) return;
+
+  delete empresas[clave];
+  persistirEmpresas();
+  renderizarListaEmpresasConfig();
+  renderizarSelectEmpresa();
+
+  if (estado.empresaActual === clave) {
+    dom.selectEmpresa.value = "otra";
+    cambiarEmpresa();
+  }
+
+  mostrarToast(t("btn_eliminar_empresa") + " ✓", "success");
+}
+
+/**
+ * Crea una nueva empresa personalizada a partir del formulario
+ * "Agregar empresa" en Configuración.
+ */
+function agregarEmpresaPersonalizada() {
+  const nombre = dom.nuevaEmpresaNombre.value.trim();
+
+  if (!nombre) {
+    alert(estado.configuracion.idioma === "en" ? "The company name is required." : "El nombre de la empresa es obligatorio.");
+    return;
+  }
+
+  const clave = generarClaveEmpresa(nombre);
+
+  empresas[clave] = {
+    nombre: nombre,
+    logo: dom.nuevaEmpresaLogo.value.trim() || "logos/generica.png",
+    colorPrincipal: dom.nuevaEmpresaColorPrincipal.value,
+    colorSecundario: dom.nuevaEmpresaColorSecundario.value,
+    precioBase: parseFloat(dom.nuevaEmpresaPrecioBase.value) || 0,
+    precioVueltaAdicional: parseFloat(dom.nuevaEmpresaPrecioAdicional.value) || 0,
+    moneda: dom.nuevaEmpresaMoneda.value
+  };
+
+  persistirEmpresas();
+  renderizarListaEmpresasConfig();
+  renderizarSelectEmpresa();
+
+  // Limpiar y ocultar el formulario
+  dom.nuevaEmpresaNombre.value = "";
+  dom.nuevaEmpresaLogo.value = "";
+  dom.nuevaEmpresaColorPrincipal.value = "#64646E";
+  dom.nuevaEmpresaColorSecundario.value = "#18181B";
+  dom.nuevaEmpresaPrecioBase.value = 35;
+  dom.nuevaEmpresaPrecioAdicional.value = 20;
+  dom.formNuevaEmpresa.hidden = true;
+
+  mostrarToast(t("btn_agregar_empresa") + " ✓", "success");
+}
+
+/* =========================================================
+   16. HISTORIAL PERSISTENTE (CRUD SOBRE LOCALSTORAGE + NUBE)
+   ========================================================= */
+
 function cargarHistorial() {
   try {
     const guardado = JSON.parse(localStorage.getItem(CLAVE_HISTORIAL));
@@ -625,18 +947,18 @@ function cargarHistorial() {
   actualizarBadgeHistorial();
 }
 
-/**
- * Escribe el historial en memoria hacia localStorage.
- */
-function persistirHistorial() {
+function persistirHistorialLocal() {
   localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(estado.historial));
   actualizarBadgeHistorial();
 }
 
-/**
- * Actualiza el contador de proformas guardadas junto al ítem
- * de navegación "Historial".
- */
+function persistirHistorial() {
+  persistirHistorialLocal();
+  if (!sincronizandoDesdeNube && nubeActiva()) {
+    window.FirebaseSync.guardarHistorial(estado.historial);
+  }
+}
+
 function actualizarBadgeHistorial() {
   const cantidad = estado.historial.length;
   dom.navBadgeHistorial.textContent = String(cantidad);
@@ -644,24 +966,14 @@ function actualizarBadgeHistorial() {
   dom.badgeHistorialTotal.textContent = String(cantidad);
 }
 
-/**
- * Genera el próximo número de proforma sugerido (PF-0001, PF-0002...)
- * a partir de la cantidad de proformas guardadas hasta ahora.
- * @returns {string}
- */
 function sugerirNumeroProforma() {
   const siguiente = estado.historial.length + 1;
   return "PF-" + String(siguiente).padStart(4, "0");
 }
 
-/**
- * Toma el estado actual del formulario (empresa, datos generales,
- * recorridos y totales) y lo guarda como una nueva entrada del
- * historial, o sobrescribe la entrada en edición si corresponde.
- */
 function guardarProforma() {
   if (estado.recorridos.length === 0) {
-    mostrarToast("Agrega al menos un recorrido antes de guardar", "danger");
+    mostrarToast(estado.configuracion.idioma === "en" ? "Add at least one trip before saving" : "Agrega al menos un recorrido antes de guardar", "danger");
     return;
   }
 
@@ -669,8 +981,8 @@ function guardarProforma() {
     dom.inputNumeroProforma.value = sugerirNumeroProforma();
   }
 
-  const empresa = empresas[estado.empresaActual];
-  const subtotal = estado.recorridos.reduce((acc, r) => acc + r.costo, 0);
+  const empresa = empresaActiva();
+  const { subtotal, descuento, impuesto, total } = calcularTotales();
 
   const proforma = {
     id: estado.proformaIdEnEdicion || ("prf_" + Date.now()),
@@ -680,10 +992,16 @@ function guardarProforma() {
     numeroProforma: dom.inputNumeroProforma.value.trim(),
     sucursal: dom.inputSucursal.value.trim(),
     observaciones: dom.inputObservaciones.value.trim(),
-    precioBase: parseInt(dom.selectPrecioVuelta.value, 10),
+    precioBase: parseFloat(dom.inputPrecioVuelta.value) || 0,
+    precioVueltaAdicional: parseFloat(dom.inputPrecioAdicional.value) || 0,
+    descuentoPorcentaje: parseFloat(dom.inputDescuento.value) || 0,
+    impuestoPorcentaje: parseFloat(dom.inputImpuesto.value) || 0,
+    moneda: empresa.moneda || estado.configuracion.monedaDefecto,
     recorridos: estado.recorridos.map((r) => ({ hora: r.hora, personas: r.personas, vueltas: r.vueltas, costo: r.costo })),
     subtotal: subtotal,
-    total: subtotal,
+    descuento: descuento,
+    impuesto: impuesto,
+    total: total,
     guardadaEn: new Date().toISOString()
   };
 
@@ -699,47 +1017,38 @@ function guardarProforma() {
 
   persistirHistorial();
   renderizarHistorial();
-  mostrarToast("Proforma guardada correctamente", "success");
+  mostrarToast(estado.configuracion.idioma === "en" ? "Quote saved successfully" : "Proforma guardada correctamente", "success");
 }
 
-/**
- * Elimina una proforma del historial por su id, previa confirmación.
- * @param {string} id
- */
 function eliminarProformaHistorial(id) {
-  const confirmado = confirm("¿Eliminar esta proforma del historial? Esta acción no se puede deshacer.");
+  const confirmado = confirm(estado.configuracion.idioma === "en"
+    ? "Delete this quote from history? This cannot be undone."
+    : "¿Eliminar esta proforma del historial? Esta acción no se puede deshacer.");
   if (!confirmado) return;
 
   estado.historial = estado.historial.filter((p) => p.id !== id);
   persistirHistorial();
   renderizarHistorial();
-  mostrarToast("Proforma eliminada", "success");
+  mostrarToast(estado.configuracion.idioma === "en" ? "Quote deleted" : "Proforma eliminada", "success");
 }
 
-/**
- * Vacía por completo el historial de proformas, previa confirmación.
- */
 function vaciarHistorial() {
   if (estado.historial.length === 0) {
-    mostrarToast("El historial ya está vacío", "danger");
+    mostrarToast(estado.configuracion.idioma === "en" ? "History is already empty" : "El historial ya está vacío", "danger");
     return;
   }
 
-  const confirmado = confirm("¿Vaciar todo el historial de proformas? Esta acción no se puede deshacer.");
+  const confirmado = confirm(estado.configuracion.idioma === "en"
+    ? "Clear the entire quote history? This cannot be undone."
+    : "¿Vaciar todo el historial de proformas? Esta acción no se puede deshacer.");
   if (!confirmado) return;
 
   estado.historial = [];
   persistirHistorial();
   renderizarHistorial();
-  mostrarToast("Historial vaciado", "success");
+  mostrarToast(estado.configuracion.idioma === "en" ? "History cleared" : "Historial vaciado", "success");
 }
 
-/**
- * Carga una proforma guardada de vuelta en el formulario "Nueva
- * Proforma" para poder consultarla o seguir editándola, y cambia
- * a esa vista.
- * @param {string} id
- */
 function cargarProformaEnFormulario(id) {
   const proforma = estado.historial.find((p) => p.id === id);
   if (!proforma) return;
@@ -748,30 +1057,32 @@ function cargarProformaEnFormulario(id) {
   estado.empresaActual = proforma.empresaClave;
   estado.recorridos = proforma.recorridos.map((r) => ({ id: estado.contadorId++, ...r }));
 
-  dom.selectEmpresa.value = proforma.empresaClave;
+  renderizarSelectEmpresa();
+  if (empresas[proforma.empresaClave]) {
+    dom.selectEmpresa.value = proforma.empresaClave;
+  }
   dom.inputFecha.value = proforma.fecha;
   dom.inputNumeroProforma.value = proforma.numeroProforma;
   dom.inputSucursal.value = proforma.sucursal;
   dom.inputObservaciones.value = proforma.observaciones;
-  dom.selectPrecioVuelta.value = String(proforma.precioBase);
+  dom.inputPrecioVuelta.value = proforma.precioBase;
+  dom.inputPrecioAdicional.value = proforma.precioVueltaAdicional || 0;
+  dom.inputDescuento.value = proforma.descuentoPorcentaje || 0;
+  dom.inputImpuesto.value = proforma.impuestoPorcentaje || 0;
 
   cambiarEmpresa();
   actualizarTabla();
   actualizarTotal();
   actualizarVistaPrevia();
   cambiarVista("nueva");
-  mostrarToast("Proforma cargada en el formulario", "success");
+  mostrarToast(estado.configuracion.idioma === "en" ? "Quote loaded into the form" : "Proforma cargada en el formulario", "success");
 }
 
-/**
- * Construye y renderiza la tabla del historial a partir del
- * estado en memoria.
- */
 function renderizarHistorial() {
   dom.tablaHistorialBody.innerHTML = "";
 
   if (estado.historial.length === 0) {
-    dom.tablaHistorialBody.innerHTML = `<tr class="empty-row" id="filaVaciaHistorial"><td colspan="6">Todavía no has guardado ninguna proforma.</td></tr>`;
+    dom.tablaHistorialBody.innerHTML = `<tr class="empty-row" id="filaVaciaHistorial"><td colspan="6">${t("empty_historial")}</td></tr>`;
     return;
   }
 
@@ -782,7 +1093,7 @@ function renderizarHistorial() {
       <td>${proforma.numeroProforma || "—"}</td>
       <td>${proforma.empresaNombre}</td>
       <td>${proforma.sucursal || "—"}</td>
-      <td>${formatearMoneda(proforma.total)}</td>
+      <td>${formatearMoneda(proforma.total, proforma.moneda)}</td>
       <td class="th-actions">
         <button class="icon-btn btn-hist-abrir" title="Abrir en el formulario">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -805,21 +1116,29 @@ function renderizarHistorial() {
 }
 
 /* =========================================================
-   14. NAVEGACIÓN ENTRE VISTAS
+   17. NAVEGACIÓN ENTRE VISTAS
    ========================================================= */
 
-const TITULOS_VISTA = {
-  nueva: { titulo: "Nueva Proforma", subtitulo: "Genera una proforma de transporte de personal en segundos." },
-  historial: { titulo: "Historial", subtitulo: "Consulta, reimprime o elimina proformas guardadas anteriormente." },
-  configuracion: { titulo: "Configuración", subtitulo: "Ajusta los valores por defecto del sistema." }
-};
+function textosVista(nombreVista) {
+  const claves = {
+    nueva: { titulo: "nav_nueva", subtitulo: null },
+    historial: { titulo: "nav_historial", subtitulo: null },
+    configuracion: { titulo: "nav_config", subtitulo: null }
+  };
 
-/**
- * Cambia la vista activa (Nueva Proforma / Historial / Configuración),
- * actualizando el título, el resaltado del menú lateral y qué
- * bloque de contenido es visible.
- * @param {"nueva"|"historial"|"configuracion"} nombreVista
- */
+  const SUBTITULOS = {
+    nueva: { es: "Genera una proforma de transporte de personal en segundos.", en: "Generate a staff transportation quote in seconds." },
+    historial: { es: "Consulta, reimprime o elimina proformas guardadas anteriormente.", en: "Review, reprint or delete previously saved quotes." },
+    configuracion: { es: "Ajusta los valores por defecto, la apariencia y el idioma del sistema.", en: "Adjust default values, appearance and language." }
+  };
+
+  const idioma = estado.configuracion.idioma === "en" ? "en" : "es";
+  return {
+    titulo: t(claves[nombreVista].titulo),
+    subtitulo: SUBTITULOS[nombreVista][idioma]
+  };
+}
+
 function cambiarVista(nombreVista) {
   estado.vistaActual = nombreVista;
 
@@ -828,8 +1147,9 @@ function cambiarVista(nombreVista) {
   dom.vistaConfiguracion.hidden = nombreVista !== "configuracion";
   dom.accionesNuevaProforma.hidden = nombreVista !== "nueva";
 
-  dom.tituloVista.textContent = TITULOS_VISTA[nombreVista].titulo;
-  dom.subtituloVista.textContent = TITULOS_VISTA[nombreVista].subtitulo;
+  const textos = textosVista(nombreVista);
+  dom.tituloVista.textContent = textos.titulo;
+  dom.subtituloVista.textContent = textos.subtitulo;
 
   dom.navItems.forEach((item) => {
     item.classList.toggle("active", item.dataset.vista === nombreVista);
@@ -838,26 +1158,27 @@ function cambiarVista(nombreVista) {
   if (nombreVista === "historial") {
     renderizarHistorial();
   }
+  if (nombreVista === "configuracion") {
+    renderizarListaEmpresasConfig();
+  }
 }
 
 /* =========================================================
-   15. RESET DEL FORMULARIO ("NUEVA PROFORMA")
+   18. RESET DEL FORMULARIO ("NUEVA PROFORMA")
    ========================================================= */
 
-/**
- * Limpia por completo el formulario para iniciar una proforma
- * desde cero, sin afectar el historial ya guardado.
- */
 function iniciarProformaNueva() {
   estado.recorridos = [];
   estado.idEdicionActual = null;
   estado.proformaIdEnEdicion = null;
 
-  dom.selectEmpresa.value = "mcdonalds";
+  renderizarSelectEmpresa();
+  dom.selectEmpresa.value = Object.keys(empresas)[0] || "otra";
   dom.inputSucursal.value = "";
   dom.inputObservaciones.value = "";
   dom.inputNumeroProforma.value = sugerirNumeroProforma();
-  dom.selectPrecioVuelta.value = String(estado.configuracion.precioDefecto);
+  dom.inputDescuento.value = 0;
+  dom.inputImpuesto.value = 0;
   dom.inputHoraSalida.value = "";
   dom.inputPersonas.value = 1;
   dom.inputVueltas.value = 1;
@@ -868,16 +1189,146 @@ function iniciarProformaNueva() {
   actualizarTotal();
   actualizarVistaPrevia();
   cambiarVista("nueva");
-  mostrarToast("Formulario listo para una nueva proforma", "success");
+  mostrarToast(estado.configuracion.idioma === "en" ? "Form ready for a new quote" : "Formulario listo para una nueva proforma", "success");
 }
 
 /* =========================================================
-   16. INICIALIZACIÓN Y EVENTOS
+   19. SINCRONIZACIÓN CON FIREBASE
    ========================================================= */
 
+function nubeActiva() {
+  return estado.configuracion.sincronizacionNube !== false && firebaseListo && window.FirebaseSync && window.FirebaseSync.disponible;
+}
+
 /**
- * Establece la fecha actual por defecto en el campo de fecha.
+ * Actualiza los indicadores visuales de estado de la nube (la
+ * pastilla del sidebar y la insignia en Configuración).
+ * @param {"conectado"|"desconectado"|"inactivo"} estadoTexto
  */
+function actualizarPildoraNube(estadoTexto) {
+  const claves = {
+    conectado: "estado_nube_conectado",
+    desconectado: "estado_nube_desconectado",
+    inactivo: "estado_nube_inactivo"
+  };
+
+  if (dom.textoNube) dom.textoNube.textContent = t(claves[estadoTexto]);
+  if (dom.badgeEstadoNube) dom.badgeEstadoNube.textContent = t(claves[estadoTexto]);
+  if (dom.puntoNube) {
+    dom.puntoNube.classList.remove("cloud-dot-on", "cloud-dot-off");
+    dom.puntoNube.classList.add(estadoTexto === "conectado" ? "cloud-dot-on" : "cloud-dot-off");
+  }
+}
+
+/**
+ * Establece la conexión con Firebase Realtime Database: en la
+ * primera carga, la nube gana si ya tiene datos (para compartir
+ * entre dispositivos); si no, sube lo que haya en este equipo.
+ * Luego se suscribe a cambios en tiempo real.
+ */
+async function conectarFirebase() {
+  if (!window.FirebaseSync || !window.FirebaseSync.disponible) {
+    actualizarPildoraNube("desconectado");
+    return;
+  }
+
+  if (!estado.configuracion.sincronizacionNube) {
+    actualizarPildoraNube("inactivo");
+    return;
+  }
+
+  actualizarPildoraNube("conectado");
+
+  const remoto = await window.FirebaseSync.leerTodo();
+
+  if (remoto) {
+    if (remoto.configuracion) {
+      estado.configuracion = Object.assign({}, estado.configuracion, remoto.configuracion);
+      persistirConfiguracionLocal();
+    } else {
+      window.FirebaseSync.guardarConfiguracion(estado.configuracion);
+    }
+
+    if (remoto.empresas) {
+      empresas = remoto.empresas;
+      persistirEmpresasLocal();
+    } else {
+      window.FirebaseSync.guardarEmpresas(empresas);
+    }
+
+    if (remoto.historial) {
+      estado.historial = Array.isArray(remoto.historial) ? remoto.historial : Object.values(remoto.historial);
+      persistirHistorialLocal();
+    } else {
+      window.FirebaseSync.guardarHistorial(estado.historial);
+    }
+
+    aplicarConfiguracionCompleta();
+    cargarConfiguracion();
+    cambiarEmpresa();
+    actualizarTabla();
+    actualizarTotal();
+    actualizarVistaPrevia();
+    if (estado.vistaActual === "historial") renderizarHistorial();
+    if (estado.vistaActual === "configuracion") renderizarListaEmpresasConfig();
+  }
+
+  window.FirebaseSync.escucharConfiguracion((datos) => {
+    if (!datos) return;
+    sincronizandoDesdeNube = true;
+    estado.configuracion = Object.assign({}, estado.configuracion, datos);
+    persistirConfiguracionLocal();
+    cargarConfiguracion();
+    aplicarConfiguracionCompleta();
+    actualizarVistaPrevia();
+    sincronizandoDesdeNube = false;
+  });
+
+  window.FirebaseSync.escucharEmpresas((datos) => {
+    if (!datos) return;
+    sincronizandoDesdeNube = true;
+    empresas = datos;
+    persistirEmpresasLocal();
+    renderizarSelectEmpresa();
+    if (empresas[estado.empresaActual]) cambiarEmpresa();
+    if (estado.vistaActual === "configuracion") renderizarListaEmpresasConfig();
+    sincronizandoDesdeNube = false;
+  });
+
+  window.FirebaseSync.escucharHistorial((datos) => {
+    if (!datos) return;
+    sincronizandoDesdeNube = true;
+    estado.historial = Array.isArray(datos) ? datos : Object.values(datos);
+    persistirHistorialLocal();
+    if (estado.vistaActual === "historial") renderizarHistorial();
+    sincronizandoDesdeNube = false;
+  });
+}
+
+/**
+ * Activa o desactiva la sincronización con la nube según la
+ * casilla de Configuración.
+ */
+function alternarSincronizacionNube() {
+  const activo = dom.checkNube.checked;
+  actualizarPreferencia("sincronizacionNube", activo);
+
+  if (activo) {
+    conectarFirebase();
+  } else {
+    if (window.FirebaseSync && window.FirebaseSync.disponible) {
+      window.FirebaseSync.detenerEscucha("configuracion");
+      window.FirebaseSync.detenerEscucha("empresas");
+      window.FirebaseSync.detenerEscucha("historial");
+    }
+    actualizarPildoraNube("inactivo");
+  }
+}
+
+/* =========================================================
+   20. INICIALIZACIÓN Y EVENTOS
+   ========================================================= */
+
 function inicializarFechaPorDefecto() {
   const hoy = new Date();
   const anio = hoy.getFullYear();
@@ -886,9 +1337,6 @@ function inicializarFechaPorDefecto() {
   dom.inputFecha.value = `${anio}-${mes}-${dia}`;
 }
 
-/**
- * Registra todos los listeners de eventos de la aplicación.
- */
 function registrarEventos() {
   dom.selectEmpresa.addEventListener("change", cambiarEmpresa);
 
@@ -897,11 +1345,13 @@ function registrarEventos() {
   dom.inputSucursal.addEventListener("input", actualizarVistaPrevia);
   dom.inputObservaciones.addEventListener("input", actualizarVistaPrevia);
 
-  dom.selectPrecioVuelta.addEventListener("change", recalcularTodosLosCostos);
+  dom.inputPrecioVuelta.addEventListener("input", recalcularTodosLosCostos);
+  dom.inputPrecioAdicional.addEventListener("input", recalcularTodosLosCostos);
+  dom.inputDescuento.addEventListener("input", () => { actualizarTotal(); actualizarVistaPrevia(); });
+  dom.inputImpuesto.addEventListener("input", () => { actualizarTotal(); actualizarVistaPrevia(); });
 
   dom.btnAgregarRecorrido.addEventListener("click", agregarRecorrido);
 
-  // Permitir agregar recorrido presionando Enter dentro del mini-formulario
   [dom.inputHoraSalida, dom.inputPersonas, dom.inputVueltas].forEach((campo) => {
     campo.addEventListener("keydown", (evento) => {
       if (evento.key === "Enter") {
@@ -915,7 +1365,9 @@ function registrarEventos() {
   dom.btnGuardarProforma.addEventListener("click", guardarProforma);
   dom.btnNuevaProforma.addEventListener("click", () => {
     if (estado.recorridos.length > 0) {
-      const confirmado = confirm("¿Descartar el formulario actual y empezar una proforma nueva?");
+      const confirmado = confirm(estado.configuracion.idioma === "en"
+        ? "Discard the current form and start a new quote?"
+        : "¿Descartar el formulario actual y empezar una proforma nueva?");
       if (!confirmado) return;
     }
     iniciarProformaNueva();
@@ -928,31 +1380,91 @@ function registrarEventos() {
     });
   });
 
-  dom.selectPrecioDefecto.addEventListener("change", guardarConfiguracion);
+  // ---------- Configuración: precios por defecto / transportista ----------
+  dom.selectMonedaDefecto.addEventListener("change", guardarConfiguracion);
+  dom.inputPrecioDefecto.addEventListener("change", guardarConfiguracion);
+  dom.inputPrecioAdicionalDefecto.addEventListener("change", guardarConfiguracion);
   dom.inputNombreTransportista.addEventListener("change", guardarConfiguracion);
   dom.btnVaciarHistorial.addEventListener("click", vaciarHistorial);
+
+  // ---------- Configuración: apariencia ----------
+  dom.segmentoTema.addEventListener("click", (evento) => {
+    const boton = evento.target.closest(".segmento-btn");
+    if (!boton) return;
+    actualizarPreferencia("tema", boton.dataset.tema);
+    aplicarTema(boton.dataset.tema);
+  });
+
+  dom.segmentoDensidad.addEventListener("click", (evento) => {
+    const boton = evento.target.closest(".segmento-btn");
+    if (!boton) return;
+    actualizarPreferencia("densidad", boton.dataset.densidad);
+    aplicarDensidad(boton.dataset.densidad);
+  });
+
+  dom.inputColorAcento.addEventListener("input", () => {
+    aplicarColorAcento(dom.inputColorAcento.value);
+  });
+  dom.inputColorAcento.addEventListener("change", () => {
+    actualizarPreferencia("colorAcento", dom.inputColorAcento.value);
+  });
+
+  // ---------- Configuración: idioma ----------
+  dom.selectIdioma.addEventListener("change", () => {
+    actualizarPreferencia("idioma", dom.selectIdioma.value);
+    aplicarIdiomaEnDOM();
+    renderizarSelectEmpresa();
+    cambiarVista(estado.vistaActual);
+    actualizarTabla();
+    actualizarTotal();
+    actualizarVistaPrevia();
+    actualizarPildoraNube(nubeActiva() ? "conectado" : (estado.configuracion.sincronizacionNube ? "desconectado" : "inactivo"));
+  });
+
+  // ---------- Configuración: empresas ----------
+  dom.btnMostrarFormEmpresa.addEventListener("click", () => {
+    dom.formNuevaEmpresa.hidden = !dom.formNuevaEmpresa.hidden;
+  });
+  dom.btnGuardarNuevaEmpresa.addEventListener("click", agregarEmpresaPersonalizada);
+
+  // ---------- Configuración: nube ----------
+  dom.checkNube.addEventListener("change", alternarSincronizacionNube);
+
+  // Tema automático: reaccionar a cambios del sistema operativo
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (estado.configuracion.tema === "auto") aplicarTema("auto");
+    });
+  }
 }
 
-/**
- * Punto de entrada de la aplicación.
- */
 function inicializarApp() {
   cargarConfiguracion();
+  cargarEmpresas();
   cargarHistorial();
   inicializarFechaPorDefecto();
   registrarEventos();
 
-  dom.selectPrecioVuelta.value = String(estado.configuracion.precioDefecto);
+  aplicarConfiguracionCompleta();
 
   if (!dom.inputNumeroProforma.value.trim()) {
     dom.inputNumeroProforma.value = sugerirNumeroProforma();
   }
 
-  cambiarEmpresa();     // Aplica empresa por defecto (McDonald's)
+  dom.selectEmpresa.value = Object.keys(empresas)[0] || "otra";
+  cambiarEmpresa();
   actualizarTabla();
   actualizarTotal();
   actualizarVistaPrevia();
   cambiarVista("nueva");
+
+  appIniciada = true;
+  if (window.FirebaseSync) firebaseListo = true;
+  if (firebaseListo) {
+    conectarFirebase();
+  } else {
+    actualizarPildoraNube("desconectado");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", inicializarApp);
