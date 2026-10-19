@@ -168,7 +168,7 @@ function generarPDF() {
   const datos = recopilarDatosProforma();
 
   if (datos.recorridos.length === 0) {
-    mostrarToast("Agrega al menos un recorrido antes de generar el PDF", "danger");
+    mostrarToast(t("toast_pdf_obligatorio"), "danger");
     return;
   }
 
@@ -290,6 +290,16 @@ async function construirDocumentoPDF(datos) {
   doc.setFontSize(9);
   doc.text("Transporte de Personal", logoTransportistaURL ? margen + 20 : margen, 20);
 
+  // Línea de contacto (teléfono / email) dentro del encabezado si existe
+  const contacto = [estado.configuracion.telefonoTransportista, estado.configuracion.emailTransportista]
+    .map((texto) => String(texto || "").trim())
+    .filter(Boolean)
+    .join("  ·  ");
+  if (contacto) {
+    doc.setFontSize(7.5);
+    doc.text(contacto, logoTransportistaURL ? margen + 20 : margen, 25);
+  }
+
   // Logo del cliente (empresa) arriba a la derecha
   if (logoClienteURL) {
     try { doc.addImage(logoClienteURL, "PNG", anchoPagina - margen - 16, 6, 18, 18); } catch (e) { /* se omite si falla */ }
@@ -408,6 +418,35 @@ async function construirDocumentoPDF(datos) {
     doc.setFont("helvetica", "normal");
     const lineasObservaciones = doc.splitTextToSize(datos.datosGenerales.observaciones, anchoPagina - margen * 2);
     doc.text(lineasObservaciones, margen, yDespuesTabla + 6);
+    yDespuesTabla += lineasObservaciones.length * 5 + 6;
+  }
+
+  // ---------- Condiciones de pago / validez de la oferta / dirección ----------
+  const condiciones = [];
+  const esEnPdf = (estado.configuracion.idioma === "en");
+  if (estado.configuracion.condicionesPago) {
+    condiciones.push((esEnPdf ? "Payment terms: " : "Condiciones de pago: ") + estado.configuracion.condicionesPago);
+  }
+  if (estado.configuracion.validezOfertaDias > 0) {
+    condiciones.push(esEnPdf
+      ? "Quote valid for " + estado.configuracion.validezOfertaDias + " days."
+      : "Cotización válida por " + estado.configuracion.validezOfertaDias + " días.");
+  }
+  if (estado.configuracion.direccionTransportista) {
+    condiciones.push((esEnPdf ? "Address: " : "Dirección: ") + estado.configuracion.direccionTransportista);
+  }
+
+  if (condiciones.length > 0) {
+    doc.setTextColor(160, 160, 168);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("CONDICIONES", margen, yDespuesTabla + 4);
+
+    doc.setTextColor(70, 70, 78);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const lineasCondiciones = doc.splitTextToSize(condiciones.join(" "), anchoPagina - margen * 2);
+    doc.text(lineasCondiciones, margen, yDespuesTabla + 10);
   }
 
   // ---------- Pie de página ----------
